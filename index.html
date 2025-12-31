@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Sistema de control para Bodega, Asaditería y Tragamoneda">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Control Negocios">
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjogIkNvbnRyb2wgZGUgTmVnb2Npb3MiLCAic2hvcnRfbmFtZSI6ICJDb250cm9sIiwgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwZjE3MmEiLCAidGhlbWVfY29sb3IiOiAiIzBmMTcyYSIsICJvcmllbnRhdGlvbiI6ICJwb3J0cmFpdCIsICJpY29ucyI6IFt7InNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWwsJTNDc3ZnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zycgdmlld0JveD0nMCAwIDEwMCAxMDAnJTNFJTNDcmVjdCB3aWR0aD0nMTAwJyBoZWlnaHQ9JzEwMCcgZmlsbD0nJTIzOGI1Y2Y2Jy8lM0UlM0N0ZXh0IHg9JzUwJyB5PSc1MCcgZm9udC1zaXplPSc1MCcgdGV4dC1hbmNob3I9J21pZGRsZScgZG9taW5hbnQtYmFzZWxpbmU9J21pZGRsZScgZmlsbD0nd2hpdGUnJTNFJUYwJTlGJTkzJThBJTNDL3RleHQlM0UlM0Mvc3ZnJTNFIiwgInNpemVzIjogIjUxMng1MTIiLCAidHlwZSI6ICJpbWFnZS9zdmcreG1sIiwgInB1cnBvc2UiOiAiYW55IG1hc2thYmxlIn1dfQ==">
+    <title>Control de Negocios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            background-attachment: fixed;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(59, 130, 246, 0.3) 100%);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .sync-badge {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #48bb78;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        
+        .tabs {
+            display: flex;
+            background: rgba(15, 23, 42, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            background: rgba(139, 92, 246, 0.1);
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        .tab.active {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+            border-bottom: 3px solid #a78bfa;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+            max-width: 100%;
+            overflow-x: auto;
+            color: #e2e8f0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-section {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            border-left: 4px solid;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .bodega { 
+            border-left-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%);
+        }
+        .asaditeria { 
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%);
+        }
+        .tragamoneda { 
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%);
+        }
+        
+        .section-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .bodega .icon { background: rgba(16, 185, 129, 0.3); color: #10b981; }
+        .asaditeria .icon { background: rgba(245, 158, 11, 0.3); color: #f59e0b; }
+        .tragamoneda .icon { background: rgba(239, 68, 68, 0.3); color: #ef4444; }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+        
+        .form-group input {
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: rgba(15, 23, 42, 0.5);
+            color: #f1f5f9;
+            backdrop-filter: blur(10px);
+            min-height: 48px;
+            touch-action: manipulation;
+            -webkit-appearance: none;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+            background: rgba(15, 23, 42, 0.7);
+        }
+        
+        .form-group input:read-only {
+            background: rgba(139, 92, 246, 0.1);
+            cursor: not-allowed;
+            border-color: rgba(167, 139, 250, 0.3);
+        }
+        
+        .calculated {
+            background: rgba(16, 185, 129, 0.15) !important;
+            font-weight: bold;
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.3) !important;
+        }
+        
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(10px);
+            min-height: 48px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(139, 92, 246, 0.6);
+        }
+        
+        .btn-secondary {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: #10b981;
+        }
+        
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: #ef4444;
+        }
+        
+        .btn-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .btn-warning:hover {
+            background: rgba(245, 158, 11, 0.3);
+            border-color: #f59e0b;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            min-width: 800px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .history-table th {
+            background: rgba(139, 92, 246, 0.3);
+            backdrop-filter: blur(10px);
+            color: #e0e7ff;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .history-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+        }
+        
+        .history-table tr:hover {
+            background: rgba(139, 92, 246, 0.1);
+        }
+        
+        .history-table .delete-btn {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            min-width: 44px;
+            min-height: 44px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .history-table .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.5);
+            border-color: #ef4444;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .summary-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(20px);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid;
+        }
+        
+        .summary-card.bodega { 
+            border-top-color: #10b981;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%);
+        }
+        .summary-card.asaditeria { 
+            border-top-color: #f59e0b;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%);
+        }
+        .summary-card.tragamoneda { 
+            border-top-color: #ef4444;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%);
+        }
+        .summary-card.total { 
+            border-top-color: #8b5cf6;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%);
+        }
+        
+        .summary-card h3 {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: #f1f5f9;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+        
+        .summary-label {
+            color: #cbd5e1;
+            font-size: 14px;
+        }
+        
+        .summary-value {
+            font-weight: bold;
+            color: #f1f5f9;
+            font-size: 16px;
+        }
+        
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid;
+        }
+        
+        .alert-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        
+        .alert-info {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+        
+        .filter-section {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .filter-section h3 {
+            color: #f1f5f9;
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        .sync-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(99, 102, 241, 0.3) 100%);
+            backdrop-filter: blur(20px);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+        }
+        
+        .sync-card h3 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+        
+        .sync-card p {
+            margin-bottom: 20px;
+            line-height: 1.6;
+            opacity: 0.95;
+        }
+        
+        .sync-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .option-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+        }
+        
+        .option-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.3);
+            border-color: rgba(167, 139, 250, 0.3);
+        }
+        
+        .option-card h4 {
+            color: #f1f5f9;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .option-card p {
+            color: #cbd5e1;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .option-card ul {
+            margin: 15px 0;
+            padding-left: 20px;
+            color: #94a3b8;
+        }
+        
+        .option-card li {
+            margin-bottom: 8px;
+        }
+        
+        .scroll-hint {
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            padding: 10px 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            color: #fbbf24;
+            font-size: 14px;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .sync-badge {
+                position: static;
+                margin-top: 15px;
+                justify-content: center;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .tab {
+                font-size: 14px;
+                padding: 12px;
+            }
+            
+            .sync-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .scroll-hint {
+                display: block;
+            }
+            
+            .tab-content {
+                padding: 15px;
+            }
+            
+            .history-table th,
+            .history-table td {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Control de Negocios</h1>
+            <p>Bodega · Asaditería · Tragamoneda</p>
+            <div class="sync-badge">
+                <div class="pulse"></div>
+                <span id="lastSaved">Guardado local</span>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('registro')">📝 Registro</button>
+            <button class="tab" onclick="showTab('historial')">📋 Historial</button>
+            <button class="tab" onclick="showTab('speende')">💰 Cargar Speende</button>
+            <button class="tab" onclick="showTab('resumen')">📈 Resumen</button>
+            <button class="tab" onclick="showTab('sync')">☁️ Sincronizar</button>
+            <button class="tab" onclick="showTab('ayuda')">❓ Ayuda</button>
+        </div>
+        
+        <!-- TAB: Registro Diario -->
+        <div id="registro" class="tab-content active">
+            <div class="alert alert-info">
+                💡 Completa los datos de cada negocio. Los cálculos se hacen automáticamente. Datos guardados en este dispositivo.
+            </div>
+            
+            <form id="registroForm">
+                <!-- FECHA -->
+                <div class="form-section" style="border-left-color: #8b5cf6; margin-bottom: 25px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(30, 41, 59, 0.6) 100%);">
+                    <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                        <div class="form-group">
+                            <label for="fecha_registro">📅 Fecha del Registro</label>
+                            <input type="date" id="fecha_registro" required style="font-size: 16px; padding: 12px;">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- BODEGA -->
+                <div class="form-section bodega">
+                    <div class="section-title">
+                        <span class="icon">🏪</span>
+                        BODEGA
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="bodega_venta_reporte">Venta según Reporte</label>
+                            <input type="number" id="bodega_venta_reporte" step="1" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="bodega_conteo">Conteo de Caja</label>
+                            <input type="number" id="bodega_conteo" step="1" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="bodega_diferencia">Diferencia (Auto)</label>
+                            <input type="number" id="bodega_diferencia" class="calculated" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="bodega_efectivo">Efectivo</label>
+                            <input type="number" id="bodega_efectivo" step="1" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="bodega_tarjeta">Tarjeta (Auto)</label>
+                            <input type="number" id="bodega_tarjeta" class="calculated" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="bodega_ganancia">Ganancia</label>
+                            <input type="number" id="bodega_ganancia" step="1" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ASADITERÍA -->
+                <div class="form-section asaditeria">
+                    <div class="section-title">
+                        <span class="icon">🍖</span>
+                        ASADITERÍA
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="asaditeria_conteo">Conteo de Caja</label>
+                            <input type="number" id="asaditeria_conteo" step="1" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="asaditeria_pedidos_ya">Pedidos Ya</label>
+                            <input type="number" id="asaditeria_pedidos_ya" step="1" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="asaditeria_tarjetas">Tarjetas</label>
+                            <input type="number" id="asaditeria_tarjetas" step="1" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="asaditeria_ganancia_neta">Ganancia Neta</label>
+                            <input type="number" id="asaditeria_ganancia_neta" step="1" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="asaditeria_ganancia_libre">Ganancia Libre (Auto)</label>
+                            <input type="number" id="asaditeria_ganancia_libre" class="calculated" readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- TRAGAMONEDA -->
+                <div class="form-section tragamoneda">
+                    <div class="section-title">
+                        <span class="icon">🎰</span>
+                        TRAGAMONEDA
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="tragamoneda_recaudacion">Recaudación</label>
+                            <input type="number" id="tragamoneda_recaudacion" step="1" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">💾 Guardar Registro</button>
+                    <button type="button" class="btn btn-secondary" onclick="limpiarFormulario()">🔄 Limpiar</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- TAB: Historial -->
+        <div id="historial" class="tab-content">
+            <div class="filter-section">
+                <h3 style="margin-bottom: 15px;">Filtrar por Fecha</h3>
+                <div class="filter-group">
+                    <div class="form-group">
+                        <label for="fecha_desde">Desde</label>
+                        <input type="date" id="fecha_desde">
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_hasta">Hasta</label>
+                        <input type="date" id="fecha_hasta">
+                    </div>
+                    <button class="btn btn-secondary" onclick="filtrarHistorial()">🔍 Filtrar</button>
+                    <button class="btn btn-secondary" onclick="mostrarTodoHistorial()">📋 Ver Todo</button>
+                </div>
+            </div>
+            
+            <div class="scroll-hint">
+                👉 Desliza la tabla hacia los lados para ver todos los datos
+            </div>
+            
+            <div id="historialContainer"></div>
+        </div>
+        
+        <!-- TAB: Cargar Speende -->
+        <div id="speende" class="tab-content">
+            <div class="sync-card">
+                <h3>💰 Datos para Cargar en Speende</h3>
+                <p>Vista simplificada de los montos que debes registrar en tu app Speende por cada negocio</p>
+            </div>
+            
+            <div class="filter-section">
+                <h3 style="margin-bottom: 15px;">📅 Filtrar por Fecha</h3>
+                <div class="filter-group">
+                    <div class="form-group">
+                        <label for="speende_fecha_desde">Desde</label>
+                        <input type="date" id="speende_fecha_desde">
+                    </div>
+                    <div class="form-group">
+                        <label for="speende_fecha_hasta">Hasta</label>
+                        <input type="date" id="speende_fecha_hasta">
+                    </div>
+                    <button class="btn btn-secondary" onclick="filtrarSpeende()">🔍 Filtrar</button>
+                    <button class="btn btn-secondary" onclick="mostrarTodoSpeende()">📋 Ver Todo</button>
+                </div>
+            </div>
+            
+            <div class="scroll-hint">
+                👉 Desliza la tabla hacia los lados para ver todos los datos
+            </div>
+            
+            <div id="speendeContainer"></div>
+        </div>
+        
+        <!-- TAB: Resumen -->
+        <div id="resumen" class="tab-content">
+            <h2 style="margin-bottom: 20px; color: #f1f5f9;">Totales Generales</h2>
+            
+            <div class="filter-section">
+                <h3 style="margin-bottom: 15px;">📅 Filtrar Resumen por Período</h3>
+                <div class="filter-group">
+                    <div class="form-group">
+                        <label for="resumen_fecha_desde">Desde</label>
+                        <input type="date" id="resumen_fecha_desde">
+                    </div>
+                    <div class="form-group">
+                        <label for="resumen_fecha_hasta">Hasta</label>
+                        <input type="date" id="resumen_fecha_hasta">
+                    </div>
+                    <button class="btn btn-secondary" onclick="filtrarResumen()">🔍 Aplicar Filtro</button>
+                    <button class="btn btn-secondary" onclick="mostrarResumenCompleto()">📊 Ver Todo</button>
+                </div>
+                <div id="resumenPeriodoInfo" style="margin-top: 15px; font-weight: 600; color: #a78bfa;"></div>
+            </div>
+            
+            <div class="summary-grid" id="resumenContainer"></div>
+        </div>
+        
+        <!-- TAB: Sincronizar -->
+        <div id="sync" class="tab-content">
+            <div class="sync-card">
+                <h3>☁️ Sincronización entre Dispositivos</h3>
+                <p>Usa cualquiera de estas opciones para mantener tus datos sincronizados entre tu celular, tablet y computadora.</p>
+            </div>
+            
+            <div class="sync-options">
+                <!-- Opción 1: Descarga/Carga Manual -->
+                <div class="option-card">
+                    <h4>📥 Método 1: Archivo Manual</h4>
+                    <p><strong>Recomendado para principiantes</strong></p>
+                    <p>Descarga un archivo JSON con todos tus datos y súbelo donde quieras (WhatsApp, email, Google Drive, etc.)</p>
+                    <ul>
+                        <li>✅ Muy simple</li>
+                        <li>✅ No requiere configuración</li>
+                        <li>✅ Funciona siempre</li>
+                        <li>⚠️ Manual (no automático)</li>
+                    </ul>
+                    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="exportarDatos()">⬇️ Descargar Datos</button>
+                        <input type="file" id="importFile" accept=".json">
+                        <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">⬆️ Cargar Datos</button>
+                    </div>
+                </div>
+                
+                <!-- Opción 2: Auto-descarga -->
+                <div class="option-card">
+                    <h4>💾 Método 2: Respaldo Automático</h4>
+                    <p><strong>Para usuarios avanzados</strong></p>
+                    <p>Guarda automáticamente cada vez que registras datos. Luego súbelo a tu nube favorita.</p>
+                    <ul>
+                        <li>✅ Genera respaldo automático</li>
+                        <li>✅ Nunca pierdes datos</li>
+                        <li>⚠️ Debes subir manualmente</li>
+                    </ul>
+                    <div style="margin-top: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="autoBackup" onchange="toggleAutoBackup()">
+                            <span>Activar respaldo automático al guardar</span>
+                        </label>
+                    </div>
+
+                    <div style="margin-top: 12px; padding: 12px; border-radius: 12px; background: rgba(15,23,42,0.55); border: 1px solid rgba(148,163,184,0.22);">
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                            <div>
+                                <div style="font-weight:700;">📅 Backup diario automático (recomendado)</div>
+                                <div id="dailyBackupStatus" style="font-size: 12px; color:#cbd5e1;">Último backup diario: —</div>
+                            </div>
+                            <button class="btn btn-secondary" onclick="dailyBackupSave('manual')">Guardar backup ahora</button>
+                        </div>
+                        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                            <select id="dailyBackupSelect" style="flex:1; min-width: 180px; padding: 10px; border-radius: 10px; border: 1px solid rgba(148,163,184,0.25); background: rgba(2,6,23,0.5); color:#e5e7eb;"></select>
+                            <button class="btn btn-secondary" onclick="dailyBackupDownloadSelected()">⬇️ Descargar</button>
+                            <button class="btn btn-danger" onclick="dailyBackupRestoreSelected()">♻️ Restaurar</button>
+                        </div>
+                        <div style="margin-top:8px; font-size: 12px; color:#94a3b8;">
+                            Este backup se guarda en tu navegador (PC o celular). Se crea 1 vez por día al usar la app y se conservan hasta 30 días.
+                        </div>
+                    </div>
+
+                </div>
+                
+                <!-- Opción 3: Compartir por WhatsApp -->
+                <div class="option-card">
+                    <h4>📱 Método 3: Compartir por WhatsApp</h4>
+                    <p><strong>Ideal para celular</strong></p>
+                    <p>Envíate el archivo a ti mismo por WhatsApp. Ábrelo en otro dispositivo desde el chat.</p>
+                    <ul>
+                        <li>✅ Súper rápido</li>
+                        <li>✅ Perfecto para celular</li>
+                        <li>✅ Historial de respaldos</li>
+                    </ul>
+                    <div style="margin-top: 15px;">
+                        <button class="btn btn-warning" onclick="compartirPorWhatsApp()">📤 Compartir por WhatsApp</button>
+                    </div>
+                </div>
+
+
+                <!-- Opción 4: Nube (JSONBin) -->
+                <div class="option-card" id="cloudCard">
+                    <h4>☁️ Método 4: Nube (JSONBin) - Automático</h4>
+                    <p><strong>Sincroniza de verdad</strong> entre PC y celular usando un Bin en la nube.</p>
+
+                    <div style="margin-top: 12px; padding: 12px; border-radius: 10px; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25);">
+                        <p style="margin: 0; color: #cbd5e1;">
+                            ⚠️ Importante: si tu app es pública, cualquiera podría ver la key en el navegador. Para pruebas está bien.
+                        </p>
+                    </div>
+
+                    <div class="filter-group" style="margin-top: 12px;">
+                        <div class="form-group" style="min-width: 220px;">
+                            <label>Tipo de Key</label>
+                            <select id="cloudKeyType">
+                                <option value="master">X-Master-Key</option>
+                                <option value="access">X-Access-Key</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="flex: 1; min-width: 240px;">
+                            <label>API Key</label>
+                            <input id="cloudApiKey" type="password" placeholder="Pegá tu key acá">
+                        </div>
+
+                        <div class="form-group" style="min-width: 120px;">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-secondary" type="button" onclick="cloudToggleKey()">👁️ Ver</button>
+                        </div>
+                    </div>
+
+                    <div class="filter-group" style="margin-top: 10px;">
+                        <div class="form-group" style="min-width: 240px;">
+                            <label>Bin ID actual</label>
+                            <input id="cloudBinId" type="text" placeholder="(vacío)" readonly>
+                        </div>
+                        <div class="form-group" style="min-width: 120px;">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-secondary" type="button" onclick="cloudCopyBin()">📋 Copiar</button>
+                        </div>
+                        <div class="form-group" style="flex: 1; min-width: 240px;">
+                            <label>Usar otro Bin ID</label>
+                            <input id="cloudBinIdInput" type="text" placeholder="Pegá el Bin ID de otro dispositivo">
+                        </div>
+                        <div class="form-group" style="min-width: 160px;">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" type="button" onclick="cloudUseBin()">✅ Usar este Bin</button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; flex-wrap: wrap; margin-top: 12px;">
+                        <button class="btn btn-warning" type="button" onclick="cloudCreateBin()">➕ Crear Bin nuevo</button>
+                        <button class="btn btn-secondary" type="button" onclick="cloudPullNow()">⬇️ Traer de la nube</button>
+                        <button class="btn btn-primary" type="button" onclick="cloudPushNow()">⬆️ Subir a la nube</button>
+                    </div>
+
+                    <div id="cloudStatus" style="margin-top: 10px; color: #cbd5e1; font-weight: 600;"></div>
+                </div>
+
+            </div>
+            
+            <!-- Estadísticas -->
+            <div class="summary-card" style="margin-top: 30px;">
+                <h3>📊 Información del Sistema</h3>
+                <div class="summary-item">
+                    <span class="summary-label">Total de registros</span>
+                    <span class="summary-value" id="totalRegistros">0</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Último registro</span>
+                    <span class="summary-value" id="ultimoRegistro">-</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Tamaño de datos</span>
+                    <span class="summary-value" id="tamañoDatos">0 KB</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">Respaldo automático</span>
+                    <span class="summary-value" id="estadoAutoBackup">Desactivado</span>
+                </div>
+            </div>
+            
+            <!-- Zona de peligro -->
+            <div class="summary-card" style="margin-top: 20px; border-top-color: #e53e3e;">
+                <h3 style="color: #e53e3e;">⚠️ Zona de Peligro</h3>
+                <p style="color: #4a5568; margin: 15px 0;">Esta acción eliminará TODOS los registros permanentemente.</p>
+                <button class="btn btn-danger" onclick="borrarTodosDatos()">🗑️ Borrar Todos los Datos</button>
+            </div>
+        </div>
+        
+        <!-- TAB: Ayuda -->
+        <div id="ayuda" class="tab-content">
+            <div class="sync-card">
+                <h3>📱 Cómo Usar en tu Celular</h3>
+                <p>Sigue estas instrucciones para tener acceso rápido desde tu pantalla de inicio</p>
+            </div>
+            
+            <div class="option-card" style="margin-bottom: 20px;">
+                <h4>🔧 Paso 1: Guarda este archivo</h4>
+                <p style="margin-bottom: 15px;">Primero necesitas tener el archivo HTML guardado en un lugar accesible:</p>
+                <ul style="margin-bottom: 15px;">
+                    <li><strong>Google Drive</strong> - Sube este archivo a tu Drive (Recomendado)</li>
+                    <li><strong>Descargas</strong> - Guárdalo en la carpeta de Descargas de tu celular</li>
+                    <li><strong>Dropbox</strong> - O cualquier servicio de nube</li>
+                </ul>
+                <div style="padding: 12px; background: rgba(59, 130, 246, 0.2); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.3);">
+                    <p style="color: #93c5fd; margin: 0;">💡 <strong>Tip:</strong> Si usas Google Drive, podrás acceder desde cualquier dispositivo y el archivo siempre estará actualizado.</p>
+                </div>
+            </div>
+            
+            <div class="option-card" style="margin-bottom: 20px;">
+                <h4>📲 Paso 2: Crea el acceso directo</h4>
+                
+                <div style="margin: 20px 0; padding: 15px; background: rgba(139, 92, 246, 0.1); border-radius: 12px; border-left: 4px solid #8b5cf6;">
+                    <h5 style="color: #a78bfa; margin-bottom: 10px;">En Chrome (Android):</h5>
+                    <ol style="color: #cbd5e1; line-height: 1.8;">
+                        <li>Abre este archivo en <strong>Chrome</strong></li>
+                        <li>Toca el menú <strong>⋮</strong> (tres puntos arriba)</li>
+                        <li>Selecciona <strong>"Agregar a pantalla de inicio"</strong></li>
+                        <li>Ponle un nombre: <strong>"Mis Negocios"</strong></li>
+                        <li>Toca <strong>"Agregar"</strong></li>
+                    </ol>
+                </div>
+                
+                <div style="margin: 20px 0; padding: 15px; background: rgba(16, 185, 129, 0.1); border-radius: 12px; border-left: 4px solid #10b981;">
+                    <h5 style="color: #6ee7b7; margin-bottom: 10px;">En Samsung Internet:</h5>
+                    <ol style="color: #cbd5e1; line-height: 1.8;">
+                        <li>Abre este archivo en <strong>Samsung Internet</strong></li>
+                        <li>Toca el menú <strong>≡</strong> (tres líneas)</li>
+                        <li>Selecciona <strong>"Agregar página a" → "Pantalla de inicio"</strong></li>
+                        <li>Confirma con <strong>"Agregar"</strong></li>
+                    </ol>
+                </div>
+                
+                <div style="margin: 20px 0; padding: 15px; background: rgba(245, 158, 11, 0.1); border-radius: 12px; border-left: 4px solid #f59e0b;">
+                    <h5 style="color: #fbbf24; margin-bottom: 10px;">Desde Google Drive:</h5>
+                    <ol style="color: #cbd5e1; line-height: 1.8;">
+                        <li>Abre el archivo desde <strong>Google Drive</strong></li>
+                        <li>Toca <strong>"Abrir con" → "Chrome"</strong> o tu navegador</li>
+                        <li>Sigue los pasos de arriba para agregarlo a inicio</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="option-card" style="margin-bottom: 20px;">
+                <h4>✅ Paso 3: ¡Úsalo como una app!</h4>
+                <p style="margin-bottom: 15px;">Una vez creado el acceso directo:</p>
+                <ul>
+                    <li>📱 Aparecerá un ícono en tu pantalla de inicio</li>
+                    <li>🚀 Tócalo para abrir la app instantáneamente</li>
+                    <li>💾 Todos tus datos se guardan en el navegador</li>
+                    <li>🔄 Sincroniza entre dispositivos con los métodos de la pestaña "Sincronizar"</li>
+                </ul>
+            </div>
+            
+            <div class="summary-card">
+                <h3>💻 Usar en Computadora</h3>
+                <p style="margin: 15px 0;">En la computadora es aún más simple:</p>
+                <ul style="margin: 15px 0;">
+                    <li>Haz <strong>doble clic</strong> en el archivo HTML</li>
+                    <li>Se abrirá en tu navegador predeterminado</li>
+                    <li>Guárdalo en <strong>Marcadores/Favoritos</strong> para acceso rápido</li>
+                    <li>O déjalo en tu <strong>Escritorio</strong> para abrirlo cuando quieras</li>
+                </ul>
+                <div style="padding: 12px; background: rgba(139, 92, 246, 0.2); border-radius: 8px; border: 1px solid rgba(139, 92, 246, 0.3); margin-top: 15px;">
+                    <p style="color: #a78bfa; margin: 0;">💡 <strong>Atajo:</strong> Presiona <strong>Ctrl+D</strong> (Windows/Linux) o <strong>Cmd+D</strong> (Mac) para guardarlo en favoritos.</p>
+                </div>
+            </div>
+            
+            <div class="summary-card" style="margin-top: 20px;">
+                <h3>❓ Preguntas Frecuentes</h3>
+                
+                <div style="margin: 15px 0; padding-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h5 style="color: #a78bfa; margin-bottom: 8px;">¿Los datos se sincronizan automáticamente?</h5>
+                    <p style="color: #cbd5e1; margin: 0;">No, cada dispositivo guarda los datos localmente. Usa la pestaña "Sincronizar" para transferir datos entre dispositivos.</p>
+                </div>
+                
+                <div style="margin: 15px 0; padding-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h5 style="color: #a78bfa; margin-bottom: 8px;">¿Necesito internet para usar la app?</h5>
+                    <p style="color: #cbd5e1; margin: 0;">No, funciona completamente sin internet. Solo necesitas internet para sincronizar datos entre dispositivos.</p>
+                </div>
+                
+                <div style="margin: 15px 0; padding-bottom: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h5 style="color: #a78bfa; margin-bottom: 8px;">¿Pierdo mis datos si borro el navegador?</h5>
+                    <p style="color: #cbd5e1; margin: 0;">Sí, los datos se guardan en el navegador. Por eso es importante hacer respaldos frecuentes desde la pestaña "Sincronizar".</p>
+                </div>
+                
+                <div style="margin: 15px 0;">
+                    <h5 style="color: #a78bfa; margin-bottom: 8px;">¿Cómo actualizo la app si hay una nueva versión?</h5>
+                    <p style="color: #cbd5e1; margin: 0;">Simplemente descarga el nuevo archivo HTML y reemplaza el anterior. Tus datos se mantienen en el navegador.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+// ===== Control General: Bin fijo y credenciales recordadas (v4.4) =====
+const FIXED_BIN_ID = "REEMPLAZAR_BIN_ID_AQUI"; // pegá tu Bin ID aquí para dejarlo estático
+const BIN_LOCKED = true; // true = no permite cambiar el bin desde la UI
+const REMEMBER_KEY_BY_DEFAULT = true; // guarda la key en este dispositivo para no volver a pegarla
+
+        // Variables globales
+        let autoBackupEnabled = false;
+        let editandoRegistroId = null;
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            // Establecer fecha actual por defecto
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha_registro').value = hoy;
+            
+            cargarHistorial();
+            actualizarResumen();
+            actualizarEstadisticas();
+            
+            
+            dailyBackupStartup();
+// Cargar estado de auto-backup
+            autoBackupEnabled = localStorage.getItem('autoBackup') === 'true';
+            document.getElementById('autoBackup').checked = autoBackupEnabled;
+            
+            // Auto-calcular campos
+            document.getElementById('bodega_conteo').addEventListener('input', calcularBodega);
+            document.getElementById('bodega_venta_reporte').addEventListener('input', calcularBodega);
+            document.getElementById('bodega_efectivo').addEventListener('input', calcularBodega);
+            document.getElementById('asaditeria_ganancia_neta').addEventListener('input', calcularAsaditeria);
+            
+            // Manejar envío del formulario
+            document.getElementById('registroForm').addEventListener('submit', guardarRegistro);
+            
+            // Manejar importación de archivo
+            document.getElementById('importFile').addEventListener('change', importarDatos);
+        });
+        
+        function calcularBodega() {
+            const ventaReporte = parseFloat(document.getElementById('bodega_venta_reporte').value) || 0;
+            const conteo = parseFloat(document.getElementById('bodega_conteo').value) || 0;
+            const efectivo = parseFloat(document.getElementById('bodega_efectivo').value) || 0;
+            
+            const diferencia = conteo - ventaReporte;
+            document.getElementById('bodega_diferencia').value = diferencia;
+            
+            const tarjeta = conteo - efectivo;
+            document.getElementById('bodega_tarjeta').value = tarjeta;
+        }
+        
+        function calcularAsaditeria() {
+            const gananciaNeta = parseFloat(document.getElementById('asaditeria_ganancia_neta').value);
+            
+            if (gananciaNeta) {
+                const gananciaLibre = gananciaNeta - 285000;
+                document.getElementById('asaditeria_ganancia_libre').value = gananciaLibre;
+            } else {
+                document.getElementById('asaditeria_ganancia_libre').value = '';
+            }
+        }
+        
+        function guardarRegistro(e) {
+            e.preventDefault();
+            
+            const fechaSeleccionada = document.getElementById('fecha_registro').value;
+            if (!fechaSeleccionada) {
+                alert('Por favor selecciona una fecha');
+                return;
+            }
+            
+            const datosRegistro = {
+                fecha: fechaSeleccionada,
+                hora: new Date().toLocaleTimeString('es-PY'),
+                bodega: {
+                    venta_reporte: parseFloat(document.getElementById('bodega_venta_reporte').value) || 0,
+                    conteo: parseFloat(document.getElementById('bodega_conteo').value) || 0,
+                    diferencia: parseFloat(document.getElementById('bodega_diferencia').value) || 0,
+                    efectivo: parseFloat(document.getElementById('bodega_efectivo').value) || 0,
+                    tarjeta: parseFloat(document.getElementById('bodega_tarjeta').value) || 0,
+                    ganancia: parseFloat(document.getElementById('bodega_ganancia').value) || 0
+                },
+                asaditeria: {
+                    conteo: parseFloat(document.getElementById('asaditeria_conteo').value) || 0,
+                    pedidos_ya: parseFloat(document.getElementById('asaditeria_pedidos_ya').value) || 0,
+                    tarjetas: parseFloat(document.getElementById('asaditeria_tarjetas').value) || 0,
+                    ganancia_neta: parseFloat(document.getElementById('asaditeria_ganancia_neta').value) || 0,
+                    ganancia_libre: parseFloat(document.getElementById('asaditeria_ganancia_libre').value) || 0
+                },
+                tragamoneda: {
+                    recaudacion: parseFloat(document.getElementById('tragamoneda_recaudacion').value) || 0
+                }
+            };
+            
+            let registros = JSON.parse(localStorage.getItem('registros') || '[]');
+            
+            if (editandoRegistroId !== null) {
+                // Modo edición - actualizar registro existente
+                const index = registros.findIndex(r => r.id === editandoRegistroId);
+                if (index !== -1) {
+                    registros[index] = {
+                        id: editandoRegistroId,
+                        ...datosRegistro
+                    };
+                }
+                
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success';
+                alertDiv.textContent = '✅ Registro actualizado exitosamente!';
+                document.getElementById('registro').insertBefore(alertDiv, document.getElementById('registroForm'));
+                setTimeout(() => alertDiv.remove(), 3000);
+                
+                editandoRegistroId = null;
+                document.querySelector('.btn-primary').textContent = '💾 Guardar Registro';
+                document.querySelector('.btn-primary').style.background = 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)';
+            } else {
+                // Modo nuevo registro
+                const registro = {
+                    id: Date.now(),
+                    ...datosRegistro
+                };
+                registros.push(registro);
+                
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success';
+                alertDiv.textContent = '✅ Registro guardado exitosamente!';
+                document.getElementById('registro').insertBefore(alertDiv, document.getElementById('registroForm'));
+                setTimeout(() => alertDiv.remove(), 3000);
+            }
+            
+            setRegistros(registros, 'guardarRegistro');
+            
+            // Auto-backup si está activado
+            if (autoBackupEnabled) {
+                exportarDatos();
+            }
+            
+            limpiarFormulario();
+            cargarHistorial();
+            actualizarResumen();
+            actualizarEstadisticas();
+            
+            // Actualizar badge
+            document.getElementById('lastSaved').textContent = 'Guardado ' + new Date().toLocaleTimeString('es-PY', {hour: '2-digit', minute: '2-digit'});
+        }
+        
+        function limpiarFormulario() {
+            document.getElementById('registroForm').reset();
+            
+            // Restablecer fecha actual
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fecha_registro').value = hoy;
+            
+            document.getElementById('bodega_diferencia').value = '';
+            document.getElementById('bodega_tarjeta').value = '';
+            document.getElementById('asaditeria_ganancia_libre').value = '';
+            
+            // Resetear modo edición
+            editandoRegistroId = null;
+            const btnGuardar = document.querySelector('.btn-primary');
+            btnGuardar.textContent = '💾 Guardar Registro';
+            btnGuardar.style.background = 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)';
+        }
+        
+        function cargarHistorial() {
+            const registros = JSON.parse(localStorage.getItem('registros') || '[]');
+            mostrarHistorial(registros);
+        }
+        
+        function mostrarHistorial(registros) {
+            const container = document.getElementById('historialContainer');
+            
+            if (registros.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No hay registros guardados aún.</div>';
+                return;
+            }
+            
+            registros.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            
+            let html = '<div class="table-wrapper"><table class="history-table">';
+            html += '<thead><tr>';
+            html += '<th>Fecha</th>';
+            html += '<th>Bodega<br>Ganancia</th>';
+            html += '<th>Bodega<br>Tarjeta</th>';
+            html += '<th>Asaditería<br>Ganancia Libre</th>';
+            html += '<th>Asaditería<br>Pedidos Ya</th>';
+            html += '<th>Asaditería<br>Tarjetas</th>';
+            html += '<th>Tragamoneda</th>';
+            html += '<th style="width: 120px;">Acciones</th>';
+            html += '</tr></thead><tbody>';
+            
+            registros.forEach(r => {
+                html += '<tr>';
+                html += `<td style="white-space: nowrap;">${formatFecha(r.fecha)}</td>`;
+                html += `<td>${formatNumber(r.bodega.ganancia)}</td>`;
+                html += `<td>${formatNumber(r.bodega.tarjeta)}</td>`;
+                html += `<td>${formatNumber(r.asaditeria.ganancia_libre)}</td>`;
+                html += `<td>${formatNumber(r.asaditeria.pedidos_ya)}</td>`;
+                html += `<td>${formatNumber(r.asaditeria.tarjetas)}</td>`;
+                html += `<td>${formatNumber(r.tragamoneda.recaudacion)}</td>`;
+                html += `<td style="white-space: nowrap;">
+                    <button class="delete-btn" onclick="editarRegistro(${r.id})" style="background: rgba(245, 158, 11, 0.3); border-color: rgba(245, 158, 11, 0.3); color: #fbbf24; margin-right: 5px;">✏️</button>
+                    <button class="delete-btn" onclick="eliminarRegistro(${r.id})">🗑️</button>
+                </td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+        
+        function filtrarHistorial() {
+            const desde = document.getElementById('fecha_desde').value;
+            const hasta = document.getElementById('fecha_hasta').value;
+            
+            let registros = JSON.parse(localStorage.getItem('registros') || '[]');
+            
+            if (desde) {
+                registros = registros.filter(r => r.fecha >= desde);
+            }
+            if (hasta) {
+                registros = registros.filter(r => r.fecha <= hasta);
+            }
+            
+            mostrarHistorial(registros);
+        }
+        
+        function mostrarTodoHistorial() {
+            document.getElementById('fecha_desde').value = '';
+            document.getElementById('fecha_hasta').value = '';
+            cargarHistorial();
+        }
+        
+        function cargarSpeende() {
+            const registros = JSON.parse(localStorage.getItem('registros') || '[]');
+            mostrarSpeende(registros);
+        }
+        
+        function mostrarSpeende(registros) {
+            const container = document.getElementById('speendeContainer');
+            
+            if (registros.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No hay registros guardados aún.</div>';
+                return;
+            }
+            
+            registros.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+            
+            let html = '<div class="table-wrapper"><table class="history-table">';
+            html += '<thead><tr>';
+            html += '<th>Fecha</th>';
+            html += '<th style="background: rgba(16, 185, 129, 0.3);">🏪 Bodega<br>Efectivo</th>';
+            html += '<th style="background: rgba(245, 158, 11, 0.3);">🍖 Asaditería<br>Conteo de Caja</th>';
+            html += '</tr></thead><tbody>';
+            
+            registros.forEach(r => {
+                html += '<tr>';
+                html += `<td style="white-space: nowrap;">${formatFecha(r.fecha)}</td>`;
+                html += `<td style="font-weight: bold; color: #6ee7b7; background: rgba(16, 185, 129, 0.15); font-size: 16px;">${formatNumber(r.bodega.efectivo || 0)}</td>`;
+                html += `<td style="font-weight: bold; color: #fbbf24; background: rgba(245, 158, 11, 0.15); font-size: 16px;">${formatNumber(r.asaditeria.conteo || 0)}</td>`;
+                html += '</tr>';
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+        
+        function filtrarSpeende() {
+            const desde = document.getElementById('speende_fecha_desde').value;
+            const hasta = document.getElementById('speende_fecha_hasta').value;
+            
+            let registros = JSON.parse(localStorage.getItem('registros') || '[]');
+            
+            if (desde) {
+                registros = registros.filter(r => r.fecha >= desde);
+            }
+            if (hasta) {
+                registros = registros.filter(r => r.fecha <= hasta);
+            }
+            
+            mostrarSpeende(registros);
+        }
+        
+        function mostrarTodoSpeende() {
+            document.getElementById('speende_fecha_desde').value = '';
+            document.getElementById('speende_fecha_hasta').value = '';
+            cargarSpeende();
+        }
+        
+        function eliminarRegistro(id) {
+            if (!confirm('¿Estás seguro de eliminar este registro?')) return;
+            
+            let registros = JSON.parse(localStorage.getItem('registros') || '[]');
+            registros = registros.filter(r => r.id !== id);
+            setRegistros(registros, 'guardarRegistro');
+            
+            cargarHistorial();
+            actualizarResumen();
+            actualizarEstadisticas();
+        }
+        
+        function editarRegistro(id) {
+            const registros = JSON.parse(localStorage.getItem('registros') || '[]');
+            const registro = registros.find(r => r.id === id);
+            
+            if (!registro) {
+                alert('Registro no encontrado');
+                return;
+            }
+            
+            // Cambiar a la pestaña de registro
+            showTab('registro');
+            document.querySelector('.tab').classList.remove('active');
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            
+            // Cargar datos en el formulario
+            document.getElementById('fecha_registro').value = registro.fecha;
+            
+            // Bodega
+            document.getElementById('bodega_venta_reporte').value = registro.bodega.venta_reporte || '';
+            document.getElementById('bodega_conteo').value = registro.bodega.conteo || '';
+            document.getElementById('bodega_efectivo').value = registro.bodega.efectivo || '';
+            document.getElementById('bodega_ganancia').value = registro.bodega.ganancia || '';
+            
+            // Asaditería
+            document.getElementById('asaditeria_conteo').value = registro.asaditeria.conteo || '';
+            document.getElementById('asaditeria_pedidos_ya').value = registro.asaditeria.pedidos_ya || '';
+            document.getElementById('asaditeria_tarjetas').value = registro.asaditeria.tarjetas || '';
+            document.getElementById('asaditeria_ganancia_neta').value = registro.asaditeria.ganancia_neta || '';
+            
+            // Tragamoneda
+            document.getElementById('tragamoneda_recaudacion').value = registro.tragamoneda.recaudacion || '';
+            
+            // Recalcular campos automáticos
+            calcularBodega();
+            calcularAsaditeria();
+            
+            // Marcar que estamos editando
+            editandoRegistroId = id;
+            
+            // Cambiar el botón de guardar
+            const btnGuardar = document.querySelector('.btn-primary');
+            btnGuardar.textContent = '✏️ Actualizar Registro';
+            btnGuardar.style.background = 'linear-gradient(135deg, #ed8936 0%, #dd6b20 100%)';
+            
+            // Scroll al inicio
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // Mostrar alerta
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-warning';
+            alertDiv.innerHTML = '✏️ <strong>Modo Edición:</strong> Modifica los datos y haz clic en "Actualizar Registro" para guardar los cambios.';
+            document.getElementById('registro').insertBefore(alertDiv, document.getElementById('registroForm'));
+            setTimeout(() => alertDiv.remove(), 5000);
+        }
+        
+        function actualizarResumen(registrosFiltrados = null) {
+            const registros = registrosFiltrados || JSON.parse(localStorage.getItem('registros') || '[]');
+            
+            const totales = {
+                bodega_tarjetas: 0,
+                bodega_ganancia: 0,
+                bodega_venta_sistema: 0,
+                asaditeria_pedidos_ya: 0,
+                asaditeria_tarjetas: 0,
+                asaditeria_conteo_caja: 0,
+                asaditeria_ganancia_libre: 0,
+                asaditeria_ingresos_totales: 0,
+                tragamoneda: 0
+            };
+            
+            registros.forEach(r => {
+                totales.bodega_tarjetas += r.bodega.tarjeta || 0;
+                totales.bodega_ganancia += r.bodega.ganancia || 0;
+                totales.bodega_venta_sistema += r.bodega.venta_reporte || 0;
+                totales.asaditeria_pedidos_ya += r.asaditeria.pedidos_ya || 0;
+                totales.asaditeria_tarjetas += r.asaditeria.tarjetas || 0;
+                totales.asaditeria_conteo_caja += r.asaditeria.conteo || 0;
+                totales.asaditeria_ganancia_libre += r.asaditeria.ganancia_libre || 0;
+                totales.tragamoneda += r.tragamoneda.recaudacion || 0;
+            });
+            
+            // Calcular ingresos totales de asaditería
+            totales.asaditeria_ingresos_totales = totales.asaditeria_conteo_caja + totales.asaditeria_pedidos_ya + totales.asaditeria_tarjetas;
+            
+            const container = document.getElementById('resumenContainer');
+            container.innerHTML = `
+                <div class="summary-card bodega">
+                    <h3>🏪 BODEGA</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">Venta según Sistema</span>
+                        <span class="summary-value">${formatNumber(totales.bodega_venta_sistema)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Tarjetas</span>
+                        <span class="summary-value">${formatNumber(totales.bodega_tarjetas)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Ganancia</span>
+                        <span class="summary-value">${formatNumber(totales.bodega_ganancia)}</span>
+                    </div>
+                </div>
+                
+                <div class="summary-card asaditeria">
+                    <h3>🍖 ASADITERÍA</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">Ingresos Totales</span>
+                        <span class="summary-value" style="color: #a78bfa; font-size: 18px;">${formatNumber(totales.asaditeria_ingresos_totales)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">• Conteo de Caja</span>
+                        <span class="summary-value">${formatNumber(totales.asaditeria_conteo_caja)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">• Pedidos Ya</span>
+                        <span class="summary-value">${formatNumber(totales.asaditeria_pedidos_ya)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">• Tarjetas</span>
+                        <span class="summary-value">${formatNumber(totales.asaditeria_tarjetas)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Ganancia Libre</span>
+                        <span class="summary-value">${formatNumber(totales.asaditeria_ganancia_libre)}</span>
+                    </div>
+                </div>
+                
+                <div class="summary-card tragamoneda">
+                    <h3>🎰 TRAGAMONEDA</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Recaudación</span>
+                        <span class="summary-value">${formatNumber(totales.tragamoneda)}</span>
+                    </div>
+                </div>
+                
+                <div class="summary-card total">
+                    <h3>💰 TOTALES COMBINADOS</h3>
+                    <div class="summary-item">
+                        <span class="summary-label">Tarjetas (Ambos Negocios)</span>
+                        <span class="summary-value">${formatNumber(totales.bodega_tarjetas + totales.asaditeria_tarjetas)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Pedidos Ya</span>
+                        <span class="summary-value">${formatNumber(totales.asaditeria_pedidos_ya)}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Ganancia Total</span>
+                        <span class="summary-value" style="font-size: 18px;">${formatNumber(totales.bodega_ganancia + totales.asaditeria_ganancia_libre + totales.tragamoneda)}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function filtrarResumen() {
+            const desde = document.getElementById('resumen_fecha_desde').value;
+            const hasta = document.getElementById('resumen_fecha_hasta').value;
+            
+            if (!desde && !hasta) {
+                alert('Por favor selecciona al menos una fecha');
+                return;
+            }
+            
+            let registros = JSON.parse(localStorage.getItem('registros') || '[]');
+            
+            if (desde) {
+                registros = registros.filter(r => r.fecha >= desde);
+            }
+            if (hasta) {
+                registros = registros.filter(r => r.fecha <= hasta);
+            }
+            
+            actualizarResumen(registros);
+            
+            // Mostrar info del período
+            const info = document.getElementById('resumenPeriodoInfo');
+            const desdeTexto = desde ? formatFecha(desde) : 'Inicio';
+            const hastaTexto = hasta ? formatFecha(hasta) : 'Hoy';
+            info.textContent = `📊 Mostrando datos del ${desdeTexto} al ${hastaTexto} (${registros.length} registros)`;
+        }
+        
+        function mostrarResumenCompleto() {
+            document.getElementById('resumen_fecha_desde').value = '';
+            document.getElementById('resumen_fecha_hasta').value = '';
+            document.getElementById('resumenPeriodoInfo').textContent = '';
+            actualizarResumen();
+        }
+        
+        function exportarDatos() {
+            const registros = JSON.parse(localStorage.getItem('registros') || '[]');
+            const dataStr = JSON.stringify(registros, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            const fecha = new Date().toISOString().split('T')[0];
+            link.download = `control_negocios_${fecha}.json`;
+            link.click();
+            
+            // Mostrar mensaje
+            const badge = document.getElementById('lastSaved');
+            const textoOriginal = badge.textContent;
+            badge.textContent = '✅ Descargado';
+            setTimeout(() => {
+                badge.textContent = textoOriginal;
+            }, 2000);
+        }
+        
+        function importarDatos(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const registros = JSON.parse(event.target.result);
+                    
+                    // Preguntar si quiere reemplazar o combinar
+                    const accion = confirm('¿Quieres REEMPLAZAR todos los datos actuales?\n\nOK = Reemplazar todo\nCancelar = Combinar con datos existentes');
+                    
+                    if (accion) {
+                        // Reemplazar
+                        setRegistros(registros, 'guardarRegistro');
+                    } else {
+                        // Combinar
+                        const registrosActuales = JSON.parse(localStorage.getItem('registros') || '[]');
+                        const combinados = [...registrosActuales, ...registros];
+                        // Eliminar duplicados por ID
+                        const unicos = Array.from(new Map(combinados.map(r => [r.id, r])).values());
+                        setRegistros(unicos, 'importar_combinar');
+                    }
+                    
+                    alert('✅ Datos importados exitosamente!');
+                    cargarHistorial();
+                    actualizarResumen();
+                    actualizarEstadisticas();
+                } catch (error) {
+                    alert('❌ Error al importar el archivo. Verifica que sea un archivo válido.');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Limpiar input para permitir cargar el mismo archivo de nuevo
+            e.target.value = '';
+        }
+        
+        function compartirPorWhatsApp() {
+            const registros = JSON.parse(localStorage.getItem('registros') || '[]');
+            const dataStr = JSON.stringify(registros, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            // En móvil, usar Web Share API si está disponible
+            if (navigator.share && navigator.canShare && navigator.canShare({files: [new File([dataBlob], 'datos.json')]})) {
+                const file = new File([dataBlob], 'control_negocios.json', {type: 'application/json'});
+                navigator.share({
+                    files: [file],
+                    title: 'Respaldo Control de Negocios',
+                    text: 'Aquí están mis datos de negocios'
+                }).catch(err => {
+                    console.log('Error compartiendo:', err);
+                    exportarDatos();
+                });
+            } else {
+                // Fallback: descargar el archivo
+                alert('En este dispositivo, descarga el archivo y envíalo manualmente por WhatsApp');
+                exportarDatos();
+            }
+        }
+        
+        function toggleAutoBackup() {
+            autoBackupEnabled = document.getElementById('autoBackup').checked;
+            localStorage.setItem('autoBackup', autoBackupEnabled);
+            actualizarEstadisticas();
+        }
+        
+        function actualizarEstadisticas() {
+            const registros = JSON.parse(localStorage.getItem('registros') || '[]');
+            const dataSize = new Blob([JSON.stringify(registros)]).size;
+            
+            document.getElementById('totalRegistros').textContent = registros.length;
+            document.getElementById('tamañoDatos').textContent = (dataSize / 1024).toFixed(2) + ' KB';
+            document.getElementById('estadoAutoBackup').textContent = autoBackupEnabled ? 'Activado ✅' : 'Desactivado';
+            
+            if (registros.length > 0) {
+                const ultimo = registros[registros.length - 1];
+                document.getElementById('ultimoRegistro').textContent = formatFecha(ultimo.fecha);
+            }
+        }
+        
+        function borrarTodosDatos() {
+            if (!confirm('⚠️ ¿Estás SEGURO de que quieres borrar TODOS los registros?\n\nEsta acción NO se puede deshacer.')) {
+                return;
+            }
+            
+            if (!confirm('Confirma nuevamente: ¿Borrar todos los datos permanentemente?')) {
+                return;
+            }
+            
+            setRegistros([], 'borrar_todo');
+            cargarHistorial();
+            actualizarResumen();
+            actualizarEstadisticas();
+            alert('✅ Todos los datos han sido eliminados.');
+        }
+        
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'historial') {
+                cargarHistorial();
+            } else if (tabName === 'resumen') {
+                actualizarResumen();
+            } else if (tabName === 'sync') {
+                actualizarEstadisticas();
+            } else if (tabName === 'speende') {
+                cargarSpeende();
+            }
+        }
+        
+        function formatNumber(num) {
+            return new Intl.NumberFormat('es-PY').format(num);
+        }
+        
+        function formatFecha(fecha) {
+            const [year, month, day] = fecha.split('-');
+            return `${day}/${month}/${year}`;
+        }
+        
+        // Registrar Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('data:text/javascript;base64,c2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJywgZnVuY3Rpb24oZXZlbnQpIHsKICBldmVudC53YWl0VW50aWwoc2VsZi5za2lwV2FpdGluZygpKTsKfSk7CgpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2FjdGl2YXRlJywgZnVuY3Rpb24oZXZlbnQpIHsKICBldmVudC53YWl0VW50aWwoY2xpZW50cy5jbGFpbSgpKTsKfSk7CgpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2ZldGNoJywgZnVuY3Rpb24oZXZlbnQpIHsKICBldmVudC5yZXNwb25kV2l0aChmZXRjaChldmVudC5yZXF1ZXN0KSk7Cn0pOw==')
+                    .catch(function() {
+                        // Service worker no se pudo registrar, continuar sin él
+                    });
+            });
+        }
+
+// =====================
+// Nube (JSONBin) - Control de Negocios
+// =====================
+let cloudSyncTimer = null;
+let cloudLastPullAt = 0;
+
+function cloudStatus(msg) {
+    const el = document.getElementById('cloudStatus');
+    if (el) el.textContent = msg;
+}
+
+function cloudGetKeyType() {
+    return localStorage.getItem('cloud_keyType') || 'master';
+}
+function cloudGetApiKey() {
+    return localStorage.getItem('cloud_apiKey') || '';
+}
+function cloudSetApiKey(key) {
+    localStorage.setItem('cloud_apiKey', key || '');
+}
+function cloudSetKeyType(t) {
+    localStorage.setItem('cloud_keyType', t || 'master');
+}
+function cloudGetBinId() {
+    return localStorage.getItem('cloud_binId') || '';
+}
+function cloudSetBinId(id) {
+    localStorage.setItem('cloud_binId', id || '');
+}
+
+function cloudHeaders() {
+    const key = cloudGetApiKey();
+    const keyType = cloudGetKeyType();
+    const headers = {
+        "Content-Type": "application/json"
+    };
+    if (!key) return headers;
+    if (keyType === 'access') headers["X-Access-Key"] = key;
+    else headers["X-Master-Key"] = key;
+    return headers;
+}
+
+// Guardado local con timestamp
+function getLocalLastModified() {
+    return parseInt(localStorage.getItem('registros_lastModified') || '0', 10) || 0;
+}
+function setLocalLastModified(ts) {
+    localStorage.setItem('registros_lastModified', String(ts || Date.now()));
+}
+function getRegistros() {
+    try { return JSON.parse(localStorage.getItem('registros') || '[]'); }
+    catch { return []; }
+}
+function setRegistros(registros, reason='') {
+    localStorage.setItem('registros', JSON.stringify(registros || []));
+    setLocalLastModified(Date.now());
+    dailyBackupSchedule(reason || 'setRegistros');
+    cloudSchedulePush(reason || 'setRegistros');
+}
+
+
+// =========================
+// Backups diarios (local)
+// =========================
+function todayISO() {
+    return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+}
+function dailyBackupIndexGet() {
+    try { return JSON.parse(localStorage.getItem('dailyBackup_index') || '[]'); }
+    catch { return []; }
+}
+function dailyBackupIndexSet(arr) {
+    localStorage.setItem('dailyBackup_index', JSON.stringify(arr || []));
+}
+function dailyBackupKey(dateStr) {
+    return `dailyBackup_${dateStr}`;
+}
+function dailyBackupLastDate() {
+    return localStorage.getItem('dailyBackup_lastDate') || '';
+}
+function dailyBackupSetLastDate(dateStr) {
+    localStorage.setItem('dailyBackup_lastDate', dateStr || '');
+}
+let dailyBackupTimer = null;
+function dailyBackupSchedule(reason='auto') {
+    // Evita escribir demasiado seguido
+    if (dailyBackupTimer) clearTimeout(dailyBackupTimer);
+    dailyBackupTimer = setTimeout(() => {
+        try { dailyBackupSave(reason); } catch (e) { console.warn('❌ Backup diario falló:', e); }
+    }, 800);
+}
+function dailyBackupSave(reason='auto') {
+    const registros = getRegistros();
+    if (!Array.isArray(registros) || registros.length === 0) {
+        // No guardamos backup vacío por defecto
+        return;
+    }
+    const dateStr = todayISO();
+    const payload = {
+        kind: "control_negocios_daily_backup",
+        date: dateStr,
+        ts: Date.now(),
+        reason,
+        lastModified: getLocalLastModified(),
+        cloud_binId: localStorage.getItem('cloud_binId') || null,
+        registros
+    };
+    localStorage.setItem(dailyBackupKey(dateStr), JSON.stringify(payload));
+    dailyBackupSetLastDate(dateStr);
+
+    // Mantener un índice de fechas, máximo 30 backups
+    let idx = dailyBackupIndexGet();
+    if (!idx.includes(dateStr)) idx.push(dateStr);
+    idx = idx.filter(Boolean).sort(); // orden asc
+    while (idx.length > 30) {
+        const old = idx.shift();
+        try { localStorage.removeItem(dailyBackupKey(old)); } catch {}
+    }
+    dailyBackupIndexSet(idx);
+
+    // UI (si existe)
+    const lbl = document.getElementById('dailyBackupStatus');
+    if (lbl) lbl.textContent = `Último backup diario: ${dateStr} ✅`;
+    const sel = document.getElementById('dailyBackupSelect');
+    if (sel) dailyBackupRefreshSelect();
+}
+function dailyBackupRefreshSelect() {
+    const sel = document.getElementById('dailyBackupSelect');
+    if (!sel) return;
+    const idx = dailyBackupIndexGet().slice().sort().reverse(); // más nuevo arriba
+    sel.innerHTML = '';
+    idx.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        sel.appendChild(opt);
+    });
+    if (idx.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No hay backups aún';
+        sel.appendChild(opt);
+    }
+}
+function dailyBackupDownloadSelected() {
+    const sel = document.getElementById('dailyBackupSelect');
+    const d = sel ? sel.value : '';
+    if (!d) return alert('No hay backup seleccionado');
+    const raw = localStorage.getItem(dailyBackupKey(d));
+    if (!raw) return alert('No se encontró ese backup');
+    const blob = new Blob([raw], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `control_negocios_backup_${d}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 800);
+}
+function dailyBackupRestoreSelected() {
+    const sel = document.getElementById('dailyBackupSelect');
+    const d = sel ? sel.value : '';
+    if (!d) return alert('No hay backup seleccionado');
+    const raw = localStorage.getItem(dailyBackupKey(d));
+    if (!raw) return alert('No se encontró ese backup');
+    let payload;
+    try { payload = JSON.parse(raw); } catch { return alert('Backup corrupto'); }
+    if (!payload || !Array.isArray(payload.registros)) return alert('Backup inválido');
+
+    const ok = confirm(`Restaurar backup del ${d}?\nEsto reemplaza tus registros actuales.`);
+    if (!ok) return;
+
+    setRegistros(payload.registros, `restore_daily_${d}`);
+    alert(`✅ Restaurado backup del ${d}`);
+    // refrescar UI
+    try { cargarHistorial(); actualizarResumen(); actualizarEstadisticas(); } catch {}
+}
+
+// En el primer ingreso del día, crea backup automáticamente si hay datos
+function dailyBackupStartup() {
+    const dateStr = todayISO();
+    const last = dailyBackupLastDate();
+    if (last !== dateStr) {
+        dailyBackupSave('startup');
+    } else {
+        // actualizar UI si existe
+        const lbl = document.getElementById('dailyBackupStatus');
+        if (lbl) lbl.textContent = `Último backup diario: ${last} ✅`;
+    }
+    dailyBackupRefreshSelect();
+}
+
+// Debounce del push para no saturar
+function cloudSchedulePush(reason='') {
+    if (!cloudGetBinId()) return;
+    clearTimeout(cloudSyncTimer);
+    cloudSyncTimer = setTimeout(() => cloudPush(false, reason), 1500);
+    console.log('🟡 Sync programado', reason);
+    cloudStatus('🟡 Sync programado…');
+}
+
+async function cloudCreateBin() {
+    // Guardar config desde UI
+    cloudPersistConfigFromUI();
+
+    // Crear Bin requiere Master Key (Core API Key). Con Access Key podés usar un Bin existente.
+    if (cloudGetKeyType() === 'access') {
+        alert('Para CREAR un Bin, JSONBin requiere X-Master-Key.\n\nSolución rápida: crea el Bin en el panel de JSONBin y luego pegá el Bin ID aquí (con tu X-Access-Key).');
+        return;
+    }
+    const headers = cloudHeaders();
+    if (!headers["X-Master-Key"] && !headers["X-Access-Key"]) {
+        alert('Pegá tu API Key primero.');
+        return;
+    }
+    cloudStatus('➕ Creando Bin…');
+    try {
+        const body = {
+                app: "control_negocios",
+                version: 1,
+                lastModified: Date.now(),
+                registros: getRegistros()
+        };
+        const res = await fetch("https://api.jsonbin.io/v3/b", {
+            method: "POST",
+            headers,
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const id = data?.metadata?.id;
+        if (!id) throw new Error('No se pudo obtener el Bin ID');
+        cloudSetBinId(id);
+        cloudRefreshUI();
+        cloudStatus('✅ Bin creado. Ya podés copiar el Bin ID.');
+        console.log('✅ Bin creado', id);
+    } catch (e) {
+        console.error('❌ Error creando Bin', e);
+        cloudStatus('❌ Error creando Bin');
+        alert('Error creando Bin. Mirá consola (F12) para detalles.');
+    }
+}
+
+function cloudUseBin() {
+    cloudPersistConfigFromUI();
+    const id = (document.getElementById('cloudBinIdInput')?.value || '').trim();
+    if (!id) {
+        alert('Pegá el Bin ID primero.');
+        return;
+    }
+    cloudSetBinId(id);
+    cloudRefreshUI();
+    cloudStatus('✅ Bin configurado. Ahora podés traer/subir.');
+}
+
+function cloudCopyBin() {
+    const id = cloudGetBinId();
+    if (!id) return alert('Aún no tenés Bin ID. Creá uno o pegá uno existente.');
+    navigator.clipboard?.writeText(id);
+    cloudStatus('📋 Bin ID copiado.');
+}
+
+function cloudToggleKey() {
+    const inp = document.getElementById('cloudApiKey');
+    if (!inp) return;
+    inp.type = (inp.type === 'password') ? 'text' : 'password';
+}
+
+function cloudPersistConfigFromUI() {
+    const keyType = document.getElementById('cloudKeyType')?.value || 'master';
+    const key = document.getElementById('cloudApiKey')?.value || '';
+    cloudSetKeyType(keyType);
+    cloudSetApiKey(key.trim());
+}
+
+function cloudRefreshUI() {
+    const bin = cloudGetBinId();
+    const keyType = cloudGetKeyType();
+    const key = cloudGetApiKey();
+
+    const binEl = document.getElementById('cloudBinId');
+    if (binEl) binEl.value = bin || '';
+    const keyTypeEl = document.getElementById('cloudKeyType');
+    if (keyTypeEl) keyTypeEl.value = keyType;
+    const keyEl = document.getElementById('cloudApiKey');
+    if (keyEl && !keyEl.value) keyEl.value = key; // no sobreescribir si el usuario está editando
+}
+
+async function cloudPullNow() {
+    cloudPersistConfigFromUI();
+    await cloudPull(true);
+}
+async function cloudPushNow() {
+    cloudPersistConfigFromUI();
+    await cloudPush(true, 'manual');
+}
+
+async function cloudPull(force=false) {
+    const binId = cloudGetBinId();
+    if (!binId) return alert('Primero configurá un Bin ID (crear o pegar).');
+    const headers = cloudHeaders();
+    cloudStatus('📥 Cargando desde la nube…');
+    console.log('📥 Cargando desde la nube…');
+
+    try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, { headers });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        let record = data?.record || {};
+        // Compat: bins creados con wrapper {record:{...}}
+        while (record && typeof record === "object" && record.record && typeof record.record === "object") {
+            record = record.record;
+        }
+        const cloudLM = record.lastModified || 0;
+        const localLM = getLocalLastModified();
+
+        // Protección: si la nube viene vacía y local no, NO pisar
+        const cloudRegs = Array.isArray(record.registros) ? record.registros : [];
+        const localRegs = getRegistros();
+
+        if (cloudRegs.length === 0 && localRegs.length > 0) {
+            cloudStatus('🛡️ La nube está vacía: no se pisa tu local.');
+            console.log('🛡️ Nube vacía; se mantiene local');
+            return;
+        }
+
+        // Evitar pisado inmediato
+        if (!force && Date.now() - cloudLastPullAt < 4000) {
+            return;
+        }
+
+        if (cloudLM > localLM) {
+            localStorage.setItem('registros', JSON.stringify(cloudRegs));
+            setLocalLastModified(cloudLM);
+            cloudStatus('✅ Datos traídos de la nube.');
+            console.log('✅ Datos cargados desde la nube (nube más nueva)');
+            // refrescar UI
+            cargarHistorial();
+            actualizarResumen();
+            actualizarEstadisticas();
+        } else {
+            cloudStatus('ℹ️ Nube no más nueva que local; se mantiene local.');
+            console.log('ℹ️ Nube no más nueva que local; se mantiene local.');
+        }
+        cloudLastPullAt = Date.now();
+    } catch (e) {
+        console.error('❌ Error cargando nube', e);
+        cloudStatus('❌ Error al traer de la nube.');
+        alert('Error al traer de la nube. Mirá consola (F12).');
+    }
+}
+
+async function cloudPush(force=false, reason='') {
+    const binId = cloudGetBinId();
+    if (!binId) return;
+    const headers = cloudHeaders();
+    if (!headers["X-Master-Key"] && !headers["X-Access-Key"]) {
+        // sin key, no se puede escribir
+        console.warn('⚠️ Falta API Key; no se puede subir');
+        return;
+    }
+
+    // Evitar push demasiado seguido si no es forzado
+    if (!force) {
+        // si justo hubo un pull muy reciente, dejar respirar
+        if (Date.now() - cloudLastPullAt < 1500) return;
+    }
+
+    cloudStatus('🔄 Sincronizando a la nube…');
+    console.log('🔄 Sincronizando a la nube…', reason);
+
+    try {
+        const body = {
+                app: "control_negocios",
+                version: 1,
+                lastModified: Date.now(),
+                registros: getRegistros()
+        };
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+            method: "PUT",
+            headers,
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        setLocalLastModified(body.lastModified);
+        cloudStatus('✅ Sincronizado exitosamente.');
+        console.log('✅ Sincronizado exitosamente.');
+    } catch (e) {
+        console.error('❌ Error sincronizando nube', e);
+        cloudStatus('❌ Error al sincronizar.');
+        alert('Error al sincronizar (PUT). Mirá consola (F12).');
+    }
+}
+
+function cloudInitUI() {
+    cloudRefreshUI();
+    // Auto-pull suave cada 20s (solo si hay Bin ID)
+    setInterval(() => {
+        if (cloudGetBinId()) cloudPull(false);
+    }, 20000);
+}
+
+// Hook: al cargar la app, inicializar UI de nube
+document.addEventListener('DOMContentLoaded', () => {
+    // si el usuario ya tiene config guardada, mostrarla
+    cloudInitUI();
+});
+
+    </script>
+<script>
+// Bloqueo de cambio de Bin desde la UI (si BIN_LOCKED=true)
+(function(){
+  try {
+    if (!BIN_LOCKED) return;
+    const binInput = document.getElementById('jsonbinIdInput') || document.getElementById('jsonbinId');
+    if (binInput) { binInput.value = (FIXED_BIN_ID && FIXED_BIN_ID !== "REEMPLAZAR_BIN_ID_AQUI") ? FIXED_BIN_ID : (localStorage.getItem('jsonbinId')||''); binInput.disabled = true; }
+    const useBtn = document.getElementById('btnUseBin') || document.getElementById('useBinBtn');
+    if (useBtn) useBtn.disabled = true;
+    const createBtn = document.getElementById('btnCreateBin') || document.getElementById('createBinBtn');
+    if (createBtn) createBtn.disabled = true;
+  } catch(e){}
+})();
+</script>
+</body>
+</html>
