@@ -1071,11 +1071,6 @@
     </div>
 
     <script>
-// ===== Control General: Bin fijo y credenciales recordadas (v4.4) =====
-const FIXED_BIN_ID = "REEMPLAZAR_BIN_ID_AQUI"; // pegá tu Bin ID aquí para dejarlo estático
-const BIN_LOCKED = true; // true = no permite cambiar el bin desde la UI
-const REMEMBER_KEY_BY_DEFAULT = true; // guarda la key en este dispositivo para no volver a pegarla
-
         // Variables globales
         let autoBackupEnabled = false;
         let editandoRegistroId = null;
@@ -2004,7 +1999,19 @@ function cloudRefreshUI() {
     if (keyEl && !keyEl.value) keyEl.value = key; // no sobreescribir si el usuario está editando
 }
 
-async function cloudPullNow() {
+
+  function getJsonbinKey() {
+    const saved = (localStorage.getItem('jsonbinKey') || '').trim();
+    if (saved) return saved;
+    const input = (document.getElementById('jsonbinKeyInput')?.value || '').trim();
+    if (input) {
+      localStorage.setItem('jsonbinKey', input);
+      return input;
+    }
+    return '';
+  }
+
+  async function cloudPullNow() {
     cloudPersistConfigFromUI();
     await cloudPull(true);
 }
@@ -2013,7 +2020,19 @@ async function cloudPushNow() {
     await cloudPush(true, 'manual');
 }
 
-async function cloudPull(force=false) {
+
+  function getJsonbinKey() {
+    const saved = (localStorage.getItem('jsonbinKey') || '').trim();
+    if (saved) return saved;
+    const input = (document.getElementById('jsonbinKeyInput')?.value || '').trim();
+    if (input) {
+      localStorage.setItem('jsonbinKey', input);
+      return input;
+    }
+    return '';
+  }
+
+  async function cloudPull(force=false) {
     const binId = cloudGetBinId();
     if (!binId) return alert('Primero configurá un Bin ID (crear o pegar).');
     const headers = cloudHeaders();
@@ -2120,24 +2139,35 @@ function cloudInitUI() {
 
 // Hook: al cargar la app, inicializar UI de nube
 document.addEventListener('DOMContentLoaded', () => {
+    // Prefill key / Bin and lock Bin field if configured
+    try {
+      const k = (localStorage.getItem('jsonbinKey') || '').trim();
+      const keyInput = document.getElementById('jsonbinKeyInput');
+      if (keyInput && k) keyInput.value = k;
+
+      const binInput = document.getElementById('jsonbinIdInput');
+      if (binInput && typeof FIXED_BIN_ID !== 'undefined' && FIXED_BIN_ID) {
+        binInput.value = FIXED_BIN_ID;
+      }
+      if (binInput && typeof LOCK_BIN_ID !== 'undefined' && LOCK_BIN_ID) {
+        binInput.disabled = true;
+        binInput.style.opacity = '0.85';
+      }
+
+      if (keyInput) {
+        const saveKey = () => {
+          const v = keyInput.value.trim();
+          if (v) localStorage.setItem('jsonbinKey', v);
+        };
+        keyInput.addEventListener('change', saveKey);
+        keyInput.addEventListener('blur', saveKey);
+      }
+    } catch (e) {}
+
     // si el usuario ya tiene config guardada, mostrarla
     cloudInitUI();
 });
 
     </script>
-<script>
-// Bloqueo de cambio de Bin desde la UI (si BIN_LOCKED=true)
-(function(){
-  try {
-    if (!BIN_LOCKED) return;
-    const binInput = document.getElementById('jsonbinIdInput') || document.getElementById('jsonbinId');
-    if (binInput) { binInput.value = (FIXED_BIN_ID && FIXED_BIN_ID !== "REEMPLAZAR_BIN_ID_AQUI") ? FIXED_BIN_ID : (localStorage.getItem('jsonbinId')||''); binInput.disabled = true; }
-    const useBtn = document.getElementById('btnUseBin') || document.getElementById('useBinBtn');
-    if (useBtn) useBtn.disabled = true;
-    const createBtn = document.getElementById('btnCreateBin') || document.getElementById('createBinBtn');
-    if (createBtn) createBtn.disabled = true;
-  } catch(e){}
-})();
-</script>
 </body>
 </html>
