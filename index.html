@@ -2014,6 +2014,8 @@ function cloudRefreshUI() {
   async function cloudPullNow() {
     cloudPersistConfigFromUI();
     await cloudPull(true);
+            try{}finally{ window.__cloudPullState.inFlight = false; }
+
 }
 async function cloudPushNow() {
     cloudPersistConfigFromUI();
@@ -2032,7 +2034,16 @@ async function cloudPushNow() {
     return '';
   }
 
-  async function cloudPull(force=false) {
+  async function cloudPull(force=false){
+            if (!getJsonbinKey()) { cloudStatus('⚠️ Falta API Key (JSONBin).'); return; }
+            window.__cloudPullState = window.__cloudPullState || { inFlight:false, lastPullAt:0 };
+            const st = window.__cloudPullState;
+            const now = Date.now();
+            if (st.inFlight) return;
+            if (reason === 'auto' && now - st.lastPullAt < 15000) return;
+            st.inFlight = true;
+            st.lastPullAt = now;
+
     const binId = cloudGetBinId();
     if (!binId) return alert('Primero configurá un Bin ID (crear o pegar).');
     const headers = cloudHeaders();
@@ -2087,7 +2098,9 @@ async function cloudPushNow() {
     }
 }
 
-async function cloudPush(force=false, reason='') {
+async function cloudPush(force=false, reason=''){
+            if (!getJsonbinKey()) { cloudStatus('⚠️ Falta API Key (JSONBin).'); return; }
+
     const binId = cloudGetBinId();
     if (!binId) return;
     const headers = cloudHeaders();
