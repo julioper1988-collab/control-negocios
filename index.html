@@ -2219,7 +2219,16 @@ async function cloudPushNow() {
     return '';
   }
 
-  async function cloudPull(force=false){
+  async function cloudPull(reason="manual", force=false){
+            // compat: si alguien llama cloudPull(true/false)
+            if (typeof reason === 'boolean') { force = reason; reason = "manual"; }
+            // compat: si llaman cloudPull("auto") sin force
+            if (typeof reason === 'string' && (reason === "auto" || reason === "manual" || reason === "focus" || reason === "visible" || reason === "post-push")) {
+                // ok
+            } else if (typeof reason === 'string' && force === false && (reason !== "manual")) {
+                // si pasan cualquier string, tratamos como reason
+            }
+
             if (!getJsonbinKey()) { cloudStatus('⚠️ Falta API Key (JSONBin).'); return; }
             window.__cloudPullState = window.__cloudPullState || { inFlight:false, lastPullAt:0 };
             const st = window.__cloudPullState;
