@@ -202,7 +202,27 @@
             -webkit-appearance: none;
         }
         
-        .form-group input:focus {
+        
+        .form-group select {
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: rgba(15, 23, 42, 0.5);
+            color: #f1f5f9;
+            backdrop-filter: blur(10px);
+            min-height: 48px;
+            touch-action: manipulation;
+            -webkit-appearance: none;
+        }
+        .form-group select:focus {
+            outline: none;
+            border-color: #a78bfa;
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+            background: rgba(15, 23, 42, 0.7);
+        }
+.form-group input:focus {
             outline: none;
             border-color: #a78bfa;
             box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
@@ -730,6 +750,16 @@
                         <label for="fecha_hasta">Hasta</label>
                         <input type="date" id="fecha_hasta">
                     </div>
+                    <div class="form-group">
+                        <label for="historial_negocio">Negocio</label>
+                        <select id="historial_negocio" onchange="filtrarHistorial()">
+                            <option value="todos">Todos</option>
+                            <option value="bodega">Bodega</option>
+                            <option value="asaditos">Asaditos</option>
+                            <option value="tragamoneda">Tragamonedas</option>
+                        </select>
+                    </div>
+
                     <button class="btn btn-secondary" onclick="filtrarHistorial()">🔍 Filtrar</button>
                     <button class="btn btn-secondary" onclick="mostrarTodoHistorial()">📋 Ver Todo</button>
                 </div>
@@ -787,6 +817,16 @@
                         <label for="resumen_fecha_hasta">Hasta</label>
                         <input type="date" id="resumen_fecha_hasta">
                     </div>
+                     <div class="form-group">
+                         <label for="resumen_negocio">Negocio</label>
+                         <select id="resumen_negocio" onchange="filtrarResumen(true)">
+                             <option value="todos">Todos</option>
+                             <option value="bodega">Bodega</option>
+                             <option value="asaditos">Asaditos</option>
+                             <option value="tragamoneda">Tragamonedas</option>
+                         </select>
+                     </div>
+
                     <button class="btn btn-secondary" onclick="filtrarResumen()">🔍 Aplicar Filtro</button>
                     <button class="btn btn-secondary" onclick="mostrarResumenCompleto()">📊 Ver Todo</button>
                 </div>
@@ -1082,7 +1122,7 @@
             document.getElementById('fecha_registro').value = hoy;
             
             cargarHistorial();
-            actualizarResumen();
+            filtrarResumen(true);
             actualizarEstadisticas();
             
             
@@ -1204,7 +1244,7 @@
             
             limpiarFormulario();
             cargarHistorial();
-            actualizarResumen();
+            filtrarResumen(true);
             actualizarEstadisticas();
             
             // Actualizar badge
@@ -1230,48 +1270,65 @@
         }
         
         function cargarHistorial() {
-            const registros = JSON.parse(localStorage.getItem('registros') || '[]');
-            mostrarHistorial(registros);
+            filtrarHistorial();
         }
         
-        function mostrarHistorial(registros) {
+        function mostrarHistorial(registros, negocio = 'todos') {
             const container = document.getElementById('historialContainer');
-            
-            if (registros.length === 0) {
-                container.innerHTML = '<div class="alert alert-info">No hay registros guardados aún.</div>';
+
+            if (!registros || registros.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No hay registros para mostrar.</div>';
                 return;
             }
-            
+
             registros.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-            
+
             let html = '<div class="table-wrapper"><table class="history-table">';
             html += '<thead><tr>';
             html += '<th>Fecha</th>';
-            html += '<th>Bodega<br>Ganancia</th>';
-            html += '<th>Bodega<br>Tarjeta</th>';
-            html += '<th>Asaditería<br>Ganancia Libre</th>';
-            html += '<th>Asaditería<br>Pedidos Ya</th>';
-            html += '<th>Asaditería<br>Tarjetas</th>';
-            html += '<th>Tragamoneda</th>';
-            html += '<th style="width: 120px;">Acciones</th>';
+
+            const n = (negocio || 'todos').toLowerCase();
+
+            if (n === 'todos' || n === 'bodega') {
+                html += '<th>Bodega<br>Ganancia</th>';
+                html += '<th>Bodega<br>Tarjeta</th>';
+            }
+            if (n === 'todos' || n === 'asaditos') {
+                html += '<th>Asaditos<br>Ganancia Libre</th>';
+                html += '<th>Asaditos<br>Pedidos Ya</th>';
+                html += '<th>Asaditos<br>Tarjetas</th>';
+            }
+            if (n === 'todos' || n === 'tragamoneda') {
+                html += '<th>Tragamonedas<br>Recaudación</th>';
+            }
+
+            html += '<th>Acciones</th>';
             html += '</tr></thead><tbody>';
-            
+
             registros.forEach(r => {
                 html += '<tr>';
                 html += `<td style="white-space: nowrap;">${formatFecha(r.fecha)}</td>`;
-                html += `<td>${formatNumber(r.bodega.ganancia)}</td>`;
-                html += `<td>${formatNumber(r.bodega.tarjeta)}</td>`;
-                html += `<td>${formatNumber(r.asaditeria.ganancia_libre)}</td>`;
-                html += `<td>${formatNumber(r.asaditeria.pedidos_ya)}</td>`;
-                html += `<td>${formatNumber(r.asaditeria.tarjetas)}</td>`;
-                html += `<td>${formatNumber(r.tragamoneda.recaudacion)}</td>`;
+
+                if (n === 'todos' || n === 'bodega') {
+                    html += `<td>${formatNumber((r.bodega && r.bodega.ganancia) || 0)}</td>`;
+                    html += `<td>${formatNumber((r.bodega && r.bodega.tarjeta) || 0)}</td>`;
+                }
+                if (n === 'todos' || n === 'asaditos') {
+                    html += `<td>${formatNumber((r.asaditeria && r.asaditeria.ganancia_libre) || 0)}</td>`;
+                    html += `<td>${formatNumber((r.asaditeria && r.asaditeria.pedidos_ya) || 0)}</td>`;
+                    html += `<td>${formatNumber((r.asaditeria && r.asaditeria.tarjetas) || 0)}</td>`;
+                }
+                if (n === 'todos' || n === 'tragamoneda') {
+                    html += `<td>${formatNumber((r.tragamoneda && r.tragamoneda.recaudacion) || 0)}</td>`;
+                }
+
                 html += `<td style="white-space: nowrap;">
-                    <button class="delete-btn" onclick="editarRegistro(${r.id})" style="background: rgba(245, 158, 11, 0.3); border-color: rgba(245, 158, 11, 0.3); color: #fbbf24; margin-right: 5px;">✏️</button>
+                    <button class="delete-btn" onclick="editarRegistro(${r.id})" style="background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.3); color: #fbbf24; margin-right: 5px;">✏️</button>
                     <button class="delete-btn" onclick="eliminarRegistro(${r.id})">🗑️</button>
                 </td>`;
                 html += '</tr>';
             });
-            
+
             html += '</tbody></table></div>';
             container.innerHTML = html;
         }
@@ -1279,23 +1336,40 @@
         function filtrarHistorial() {
             const desde = document.getElementById('fecha_desde').value;
             const hasta = document.getElementById('fecha_hasta').value;
-            
+            const negocio = (document.getElementById('historial_negocio')?.value || 'todos').toLowerCase();
+
             let registros = JSON.parse(localStorage.getItem('registros') || '[]');
-            
+
             if (desde) {
                 registros = registros.filter(r => r.fecha >= desde);
             }
             if (hasta) {
                 registros = registros.filter(r => r.fecha <= hasta);
             }
-            
-            mostrarHistorial(registros);
+
+            if (negocio !== 'todos') {
+                registros = registros.filter(r => registroTieneNegocio(r, negocio));
+            }
+
+            mostrarHistorial(registros, negocio);
+
+            const infoEl = document.getElementById('historialPeriodoInfo');
+            if (infoEl) {
+                if (registros.length === 0) {
+                    infoEl.textContent = '📋 Sin registros para el filtro seleccionado.';
+                } else {
+                    const ri = getDateRangeInfo(registros);
+                    const minTxt = ri.min ? formatFecha(ri.min) : '—';
+                    const maxTxt = ri.max ? formatFecha(ri.max) : '—';
+                    infoEl.textContent = `📋 ${negocioLabel(negocio)}: ${minTxt} – ${maxTxt} (${ri.count} registros)`;
+                }
+            }
         }
         
         function mostrarTodoHistorial() {
             document.getElementById('fecha_desde').value = '';
             document.getElementById('fecha_hasta').value = '';
-            cargarHistorial();
+            filtrarHistorial();
         }
         
         function cargarSpeende() {
@@ -1362,7 +1436,7 @@
             setRegistros(registros, 'guardarRegistro');
             
             cargarHistorial();
-            actualizarResumen();
+            filtrarResumen(true);
             actualizarEstadisticas();
         }
         
@@ -1421,9 +1495,14 @@
             setTimeout(() => alertDiv.remove(), 5000);
         }
         
-        function actualizarResumen(registrosFiltrados = null) {
-            const registros = registrosFiltrados || JSON.parse(localStorage.getItem('registros') || '[]');
-            
+        function actualizarResumen(registrosFiltrados = null, negocioParam = null) {
+            const negocio = (negocioParam || document.getElementById('resumen_negocio')?.value || 'todos').toLowerCase();
+            let registros = registrosFiltrados || JSON.parse(localStorage.getItem('registros') || '[]');
+
+            if (negocio !== 'todos') {
+                registros = registros.filter(r => registroTieneNegocio(r, negocio));
+            }
+
             const totales = {
                 bodega_tarjetas: 0,
                 bodega_ganancia: 0,
@@ -1435,121 +1514,187 @@
                 asaditeria_ingresos_totales: 0,
                 tragamoneda: 0
             };
-            
+
             registros.forEach(r => {
-                totales.bodega_tarjetas += r.bodega.tarjeta || 0;
-                totales.bodega_ganancia += r.bodega.ganancia || 0;
-                totales.bodega_venta_sistema += r.bodega.venta_reporte || 0;
-                totales.asaditeria_pedidos_ya += r.asaditeria.pedidos_ya || 0;
-                totales.asaditeria_tarjetas += r.asaditeria.tarjetas || 0;
-                totales.asaditeria_conteo_caja += r.asaditeria.conteo || 0;
-                totales.asaditeria_ganancia_libre += r.asaditeria.ganancia_libre || 0;
-                totales.tragamoneda += r.tragamoneda.recaudacion || 0;
+                const b = r.bodega || {};
+                const a = r.asaditeria || {};
+                const t = r.tragamoneda || {};
+
+                if (negocio === 'todos' || negocio === 'bodega') {
+                    totales.bodega_tarjetas += b.tarjeta || 0;
+                    totales.bodega_ganancia += b.ganancia || 0;
+                    totales.bodega_venta_sistema += b.venta_reporte || 0;
+                }
+                if (negocio === 'todos' || negocio === 'asaditos') {
+                    totales.asaditeria_pedidos_ya += a.pedidos_ya || 0;
+                    totales.asaditeria_tarjetas += a.tarjetas || 0;
+                    totales.asaditeria_conteo_caja += a.conteo || 0;
+                    totales.asaditeria_ganancia_libre += a.ganancia_libre || 0;
+                }
+                if (negocio === 'todos' || negocio === 'tragamoneda') {
+                    totales.tragamoneda += t.recaudacion || 0;
+                }
             });
-            
-            // Calcular ingresos totales de asaditería
-            totales.asaditeria_ingresos_totales = totales.asaditeria_conteo_caja + totales.asaditeria_pedidos_ya + totales.asaditeria_tarjetas;
-            
+
+            totales.asaditeria_ingresos_totales = totales.asaditeria_ganancia_libre + totales.asaditeria_pedidos_ya + totales.asaditeria_tarjetas;
+
             const container = document.getElementById('resumenContainer');
-            container.innerHTML = `
-                <div class="summary-card bodega">
-                    <h3>🏪 BODEGA</h3>
-                    <div class="summary-item">
-                        <span class="summary-label">Venta según Sistema</span>
-                        <span class="summary-value">${formatNumber(totales.bodega_venta_sistema)}</span>
+
+            const cards = [];
+
+            if (negocio === 'todos' || negocio === 'bodega') {
+                cards.push(`
+                    <div class="summary-card bodega">
+                        <h3>🏪 BODEGA</h3>
+                        <div class="summary-item">
+                            <span class="summary-label">Venta según Sistema</span>
+                            <span class="summary-value">${formatNumber(totales.bodega_venta_sistema)}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Tarjetas</span>
+                            <span class="summary-value">${formatNumber(totales.bodega_tarjetas)}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Ganancia</span>
+                            <span class="summary-value">${formatNumber(totales.bodega_ganancia)}</span>
+                        </div>
                     </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Total Tarjetas</span>
-                        <span class="summary-value">${formatNumber(totales.bodega_tarjetas)}</span>
+                `);
+            }
+
+            if (negocio === 'todos' || negocio === 'asaditos') {
+                cards.push(`
+                    <div class="summary-card asaditeria">
+                        <h3>🍖 ASADITOS</h3>
+                        <div class="summary-item">
+                            <span class="summary-label">Conteo Caja</span>
+                            <span class="summary-value">${formatNumber(totales.asaditeria_conteo_caja)}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Pedidos Ya</span>
+                            <span class="summary-value">${formatNumber(totales.asaditeria_pedidos_ya)}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Tarjetas</span>
+                            <span class="summary-value">${formatNumber(totales.asaditeria_tarjetas)}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Ganancia Libre</span>
+                            <span class="summary-value" style="font-weight: 800;">${formatNumber(totales.asaditeria_ganancia_libre)}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Ingresos Totales</span>
+                            <span class="summary-value">${formatNumber(totales.asaditeria_ingresos_totales)}</span>
+                        </div>
                     </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Total Ganancia</span>
-                        <span class="summary-value">${formatNumber(totales.bodega_ganancia)}</span>
+                `);
+            }
+
+            if (negocio === 'todos' || negocio === 'tragamoneda') {
+                cards.push(`
+                    <div class="summary-card tragamoneda">
+                        <h3>🎰 TRAGAMONEDAS</h3>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Recaudación</span>
+                            <span class="summary-value">${formatNumber(totales.tragamoneda)}</span>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="summary-card asaditeria">
-                    <h3>🍖 ASADITERÍA</h3>
-                    <div class="summary-item">
-                        <span class="summary-label">Ingresos Totales</span>
-                        <span class="summary-value" style="color: #a78bfa; font-size: 18px;">${formatNumber(totales.asaditeria_ingresos_totales)}</span>
+                `);
+            }
+
+            if (negocio === 'todos') {
+                cards.push(`
+                    <div class="summary-card total">
+                        <h3>💰 TOTALES COMBINADOS</h3>
+                        <div class="summary-item">
+                            <span class="summary-label">Tarjetas (Bodega + Asaditos)</span>
+                            <span class="summary-value">${formatNumber(totales.bodega_tarjetas + totales.asaditeria_tarjetas)}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Total Pedidos Ya</span>
+                            <span class="summary-value">${formatNumber(totales.asaditeria_pedidos_ya)}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-label">Ganancia Total</span>
+                            <span class="summary-value" style="font-weight: 900;">${formatNumber(totales.bodega_ganancia + totales.asaditeria_ganancia_libre + totales.tragamoneda)}</span>
+                        </div>
                     </div>
-                    <div class="summary-item">
-                        <span class="summary-label">• Conteo de Caja</span>
-                        <span class="summary-value">${formatNumber(totales.asaditeria_conteo_caja)}</span>
+                `);
+            } else {
+                // cuando se filtra por un negocio, igual mostramos un total del negocio seleccionado
+                let totalNegocio = 0;
+                if (negocio === 'bodega') totalNegocio = totales.bodega_ganancia;
+                if (negocio === 'asaditos') totalNegocio = totales.asaditeria_ganancia_libre;
+                if (negocio === 'tragamoneda') totalNegocio = totales.tragamoneda;
+
+                cards.push(`
+                    <div class="summary-card total">
+                        <h3>✅ TOTAL ${negocioLabel(negocio).toUpperCase()}</h3>
+                        <div class="summary-item">
+                            <span class="summary-label">Total</span>
+                            <span class="summary-value" style="font-weight: 900;">${formatNumber(totalNegocio)}</span>
+                        </div>
                     </div>
-                    <div class="summary-item">
-                        <span class="summary-label">• Pedidos Ya</span>
-                        <span class="summary-value">${formatNumber(totales.asaditeria_pedidos_ya)}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">• Tarjetas</span>
-                        <span class="summary-value">${formatNumber(totales.asaditeria_tarjetas)}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Ganancia Libre</span>
-                        <span class="summary-value">${formatNumber(totales.asaditeria_ganancia_libre)}</span>
-                    </div>
-                </div>
-                
-                <div class="summary-card tragamoneda">
-                    <h3>🎰 TRAGAMONEDA</h3>
-                    <div class="summary-item">
-                        <span class="summary-label">Total Recaudación</span>
-                        <span class="summary-value">${formatNumber(totales.tragamoneda)}</span>
-                    </div>
-                </div>
-                
-                <div class="summary-card total">
-                    <h3>💰 TOTALES COMBINADOS</h3>
-                    <div class="summary-item">
-                        <span class="summary-label">Tarjetas (Ambos Negocios)</span>
-                        <span class="summary-value">${formatNumber(totales.bodega_tarjetas + totales.asaditeria_tarjetas)}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Total Pedidos Ya</span>
-                        <span class="summary-value">${formatNumber(totales.asaditeria_pedidos_ya)}</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-label">Ganancia Total</span>
-                        <span class="summary-value" style="font-size: 18px;">${formatNumber(totales.bodega_ganancia + totales.asaditeria_ganancia_libre + totales.tragamoneda)}</span>
-                    </div>
-                </div>
-            `;
+                `);
+            }
+
+            container.innerHTML = cards.join('\n');
         }
         
-        function filtrarResumen() {
+        function filtrarResumen(allowEmpty = false) {
             const desde = document.getElementById('resumen_fecha_desde').value;
             const hasta = document.getElementById('resumen_fecha_hasta').value;
-            
-            if (!desde && !hasta) {
+            const negocio = (document.getElementById('resumen_negocio')?.value || 'todos').toLowerCase();
+
+            if (!allowEmpty && !desde && !hasta) {
                 alert('Por favor selecciona al menos una fecha');
                 return;
             }
-            
+
             let registros = JSON.parse(localStorage.getItem('registros') || '[]');
-            
+
             if (desde) {
                 registros = registros.filter(r => r.fecha >= desde);
             }
             if (hasta) {
                 registros = registros.filter(r => r.fecha <= hasta);
             }
-            
-            actualizarResumen(registros);
-            
-            // Mostrar info del período
+
+            if (negocio !== 'todos') {
+                registros = registros.filter(r => registroTieneNegocio(r, negocio));
+            }
+
+            actualizarResumen(registros, negocio);
+
             const info = document.getElementById('resumenPeriodoInfo');
-            const desdeTexto = desde ? formatFecha(desde) : 'Inicio';
-            const hastaTexto = hasta ? formatFecha(hasta) : 'Hoy';
-            info.textContent = `📊 Mostrando datos del ${desdeTexto} al ${hastaTexto} (${registros.length} registros)`;
+            if (info) {
+                if (registros.length === 0) {
+                    info.textContent = `📊 ${negocioLabel(negocio)}: sin registros en el período seleccionado.`;
+                } else {
+                    const ri = getDateRangeInfo(registros);
+                    const minTxt = ri.min ? formatFecha(ri.min) : '—';
+                    const maxTxt = ri.max ? formatFecha(ri.max) : '—';
+                    info.textContent = `📊 ${negocioLabel(negocio)}: ${minTxt} – ${maxTxt} (${ri.count} registros)`;
+                }
+            }
         }
         
         function mostrarResumenCompleto() {
             document.getElementById('resumen_fecha_desde').value = '';
             document.getElementById('resumen_fecha_hasta').value = '';
-            document.getElementById('resumenPeriodoInfo').textContent = '';
-            actualizarResumen();
+            const negocio = (document.getElementById('resumen_negocio')?.value || 'todos').toLowerCase();
+            actualizarResumen(null, negocio);
+
+            const registrosAll = JSON.parse(localStorage.getItem('registros') || '[]');
+            const regs = (negocio !== 'todos') ? registrosAll.filter(r => registroTieneNegocio(r, negocio)) : registrosAll;
+            const info = document.getElementById('resumenPeriodoInfo');
+            if (info) {
+                if (regs.length === 0) info.textContent = `📊 ${negocioLabel(negocio)}: sin registros.`;
+                else {
+                    const ri = getDateRangeInfo(regs);
+                    info.textContent = `📊 ${negocioLabel(negocio)}: ${formatFecha(ri.min)} – ${formatFecha(ri.max)} (${ri.count} registros)`;
+                }
+            }
         }
         
         function exportarDatos() {
@@ -1599,7 +1744,7 @@
                     
                     alert('✅ Datos importados exitosamente!');
                     cargarHistorial();
-                    actualizarResumen();
+                    filtrarResumen(true);
                     actualizarEstadisticas();
                 } catch (error) {
                     alert('❌ Error al importar el archivo. Verifica que sea un archivo válido.');
@@ -1665,7 +1810,7 @@
             
             setRegistros([], 'borrar_todo');
             cargarHistorial();
-            actualizarResumen();
+            filtrarResumen(true);
             actualizarEstadisticas();
             alert('✅ Todos los datos han sido eliminados.');
         }
@@ -1677,14 +1822,14 @@
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.classList.remove('active');
             });
-            
+
             document.getElementById(tabName).classList.add('active');
             event.target.classList.add('active');
-            
+
             if (tabName === 'historial') {
                 cargarHistorial();
             } else if (tabName === 'resumen') {
-                actualizarResumen();
+                filtrarResumen(true);
             } else if (tabName === 'sync') {
                 actualizarEstadisticas();
             } else if (tabName === 'speende') {
@@ -1700,6 +1845,46 @@
             const [year, month, day] = fecha.split('-');
             return `${day}/${month}/${year}`;
         }
+
+        function negocioLabel(key) {
+            switch ((key || '').toLowerCase()) {
+                case 'bodega': return 'Bodega';
+                case 'asaditos': return 'Asaditos';
+                case 'tragamoneda': return 'Tragamonedas';
+                default: return 'Todos';
+            }
+        }
+
+        function getDateRangeInfo(registros) {
+            if (!registros || registros.length === 0) return {count: 0, min: null, max: null};
+            let min = registros[0].fecha, max = registros[0].fecha;
+            for (const r of registros) {
+                if (!r || !r.fecha) continue;
+                if (r.fecha < min) min = r.fecha;
+                if (r.fecha > max) max = r.fecha;
+            }
+            return {count: registros.length, min, max};
+        }
+
+        function registroTieneNegocio(r, negocio) {
+            if (!r) return false;
+            const n = (negocio || 'todos').toLowerCase();
+            if (n === 'todos') return true;
+            if (n === 'bodega') {
+                const b = r.bodega || {};
+                return (b.venta_reporte || b.conteo || b.diferencia || b.efectivo || b.tarjeta || b.ganancia) !== 0;
+            }
+            if (n === 'asaditos') {
+                const a = r.asaditeria || {};
+                return (a.conteo || a.pedidos_ya || a.tarjetas || a.ganancia_neta || a.ganancia_libre) !== 0;
+            }
+            if (n === 'tragamoneda') {
+                const t = r.tragamoneda || {};
+                return (t.recaudacion || 0) !== 0;
+            }
+            return true;
+        }
+
         
         // Registrar Service Worker para PWA
         if ('serviceWorker' in navigator) {
@@ -1886,7 +2071,7 @@ function dailyBackupRestoreSelected() {
     setRegistros(payload.registros, `restore_daily_${d}`);
     alert(`✅ Restaurado backup del ${d}`);
     // refrescar UI
-    try { cargarHistorial(); actualizarResumen(); actualizarEstadisticas(); } catch {}
+    try { cargarHistorial(); filtrarResumen(true); actualizarEstadisticas(); } catch {}
 }
 
 // En el primer ingreso del día, crea backup automáticamente si hay datos
@@ -2084,7 +2269,7 @@ async function cloudPushNow() {
             console.log('✅ Datos cargados desde la nube (nube más nueva)');
             // refrescar UI
             cargarHistorial();
-            actualizarResumen();
+            filtrarResumen(true);
             actualizarEstadisticas();
         } else {
             cloudStatus('ℹ️ Nube no más nueva que local; se mantiene local.');
