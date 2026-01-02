@@ -2603,6 +2603,243 @@ document.addEventListener('DOMContentLoaded', () => {
 
 })();
 
+
+
+// =====================
+// PATCH v12 – Borrado definitivo (tombstones + wipe) + Sync payload extendido
+// =====================
+(function(){
+  const DEL_KEY = 'deletedIds';
+  const WIPE_KEY = 'wipeAt';
+
+  function _toNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
+  function getDeletedIds(){
+    try { return JSON.parse(localStorage.getItem(DEL_KEY) || '[]') || []; } catch(e){ return []; }
+  }
+  function setDeletedIds(arr){
+    const uniq = Array.from(new Set((arr||[]).map(x => String(x))));
+    localStorage.setItem(DEL_KEY, JSON.stringify(uniq));
+    return uniq;
+  }
+  function getWipeAt(){ return _toNum(localStorage.getItem(WIPE_KEY) || 0); }
+  function setWipeAt(ts){ localStorage.setItem(WIPE_KEY, String(_toNum(ts))); }
+
+  // --- Helpers for merge ---
+  function normalizeId(id){ return String(id); }
+  function filterNotDeleted(list, delSet){
+    return (Array.isArray(list)?list:[]).filter(r => r && !delSet.has(normalizeId(r.id)));
+  }
+  function safeArr(v){ return Array.isArray(v) ? v : []; }
+
+  // --- Patch eliminarRegistro: agrega "tombstone" para que el borrado se replique ---
+  const _origEliminar = window.eliminarRegistro;
+  window.eliminarRegistro = function(id){
+    if (!confirm('¿Estás seguro de eliminar este registro?')) return;
+
+    const delSet = new Set(getDeletedIds().map(String));
+    delSet.add(String(id));
+    setDeletedIds(Array.from(delSet));
+
+    let registros = [];
+    try { registros = JSON.parse(localStorage.getItem('registros') || '[]'); } catch(e){ registros = []; }
+    registros = registros.filter(r => String(r.id) !== String(id));
+    // Esto ya actualiza lastModified local y dispara push (1.5s)
+    setRegistros(registros, 'delete_registro');
+
+    try { cargarHistorial(); actualizarResumen(); actualizarEstadisticas(); } catch(e){}
+  };
+
+  // --- Patch borrarTodosDatos: genera un "wipeAt" para borrar en todos los dispositivos ---
+  const _origBorrarTodos = window.borrarTodosDatos;
+  window.borrarTodosDatos = function(){
+    if (!confirm('⚠️ ¿Estás SEGURO de que quieres borrar TODOS los registros?\n\nEsta acción NO se puede deshacer.')) return;
+    if (!confirm('Confirma nuevamente: ¿Borrar todos los datos permanentemente?')) return;
+
+    const ts = Date.now();
+    setWipeAt(ts);
+    setDeletedIds([]); // reset tombstones (wipe manda todo a cero)
+
+    setRegistros([], 'borrar_todo'); // dispara push
+
+    try { cargarHistorial(); actualizarResumen(); actualizarEstadisticas(); } catch(e){}
+    alert('✅ Todos los datos han sido eliminados.');
+  };
+
+  // --- Override cloudPull/cloudPush para incluir deletedIds + wipeAt ---
+  const _origPull = window.cloudPull;
+  const _origPush = window.cloudPush;
+
+  window.cloudPull = async function(reason='manual', force=false){
+    if (typeof reason === 'boolean') { force = reason; reason = 'manual'; }
+    const binId = (typeof cloudGetBinId === 'function') ? cloudGetBinId() : null;
+    if (!binId) return;
+
+    // Evita pulls repetidos (pero permite force)
+    if (!force && typeof pullIsLocked === 'function' && pullIsLocked()){
+      // Si hay cambios locales recientes, no pises
+      return;
+    }
+
+    const headers = (typeof cloudHeaders === 'function') ? cloudHeaders() : {};
+    cloudStatus('📥 Cargando desde la nube…');
+    console.log('📥 Cargando desde la nube…', reason);
+
+    try{
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, { headers });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json();
+      const rec = data?.record || {};
+
+      const cloudLM = _toNum(rec.lastModified || 0);
+      const cloudWipe = _toNum(rec.wipeAt || 0);
+      const cloudDeleted = safeArr(rec.deletedIds).map(String);
+      const cloudRegs = safeArr(rec.registros);
+
+      const localLM = (typeof getLocalLastModified === 'function') ? _toNum(getLocalLastModified()) : 0;
+      const localWipe = getWipeAt();
+      const localDeleted = getDeletedIds().map(String);
+
+      // 1) Wipe global (si nube tiene wipe más nuevo)
+      if (cloudWipe && cloudWipe > localWipe){
+        setWipeAt(cloudWipe);
+        setDeletedIds(cloudDeleted); // lo que venga en nube
+        localStorage.setItem('registros', JSON.stringify([]));
+        if (typeof setLocalLastModified === 'function') setLocalLastModified(Math.max(localLM, cloudLM, cloudWipe));
+        cloudStatus('🧹 Borrado total aplicado desde la nube.');
+        console.log('🧹 Wipe aplicado', {cloudWipe});
+        try { cargarHistorial(); actualizarResumen(); actualizarEstadisticas(); } catch(e){}
+        return;
+      }
+
+      // 2) Unir tombstones (borrados definitivos)
+      const delSet = new Set([...localDeleted, ...cloudDeleted].map(String));
+      setDeletedIds(Array.from(delSet));
+
+      // 3) Merge: si nube es más nueva (o force), aplica actualizaciones + respeta borrados
+      const shouldApply = force || (cloudLM && cloudLM > localLM);
+      if (!shouldApply){
+        cloudStatus('ℹ️ Nube no más nueva que local; sin cambios.');
+        return;
+      }
+
+      let localRegs = [];
+      try { localRegs = JSON.parse(localStorage.getItem('registros') || '[]'); } catch(e){ localRegs = []; }
+
+      // Filtrar borrados
+      localRegs = filterNotDeleted(localRegs, delSet);
+      const filteredCloud = filterNotDeleted(cloudRegs, delSet);
+
+      // Mapa por ID: la nube sobreescribe (cuando nube es más nueva)
+      const map = new Map();
+      for (const r of localRegs){ if (r && r.id != null) map.set(normalizeId(r.id), r); }
+      let added = 0, updated = 0;
+      for (const r of filteredCloud){
+        if (!r || r.id == null) continue;
+        const k = normalizeId(r.id);
+        if (!map.has(k)) added++;
+        else updated++;
+        map.set(k, r);
+      }
+
+      const merged = Array.from(map.values())
+        .filter(Boolean)
+        .sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||''));
+
+      localStorage.setItem('registros', JSON.stringify(merged));
+      if (typeof setLocalLastModified === 'function') setLocalLastModified(Math.max(localLM, cloudLM));
+
+      // Limpieza: si algún registro local quedó con ID en deletedIds (doble seguridad)
+      if (delSet.size){
+        const cleaned = merged.filter(r => r && !delSet.has(normalizeId(r.id)));
+        if (cleaned.length !== merged.length){
+          localStorage.setItem('registros', JSON.stringify(cleaned));
+        }
+      }
+
+      cloudStatus(`✅ Mezcla aplicada: +${added} / ✏️${updated} (borrados sincronizados).`);
+      console.log('✅ Merge aplicado', {added, updated, cloudLM, localLM});
+
+      try { cargarHistorial(); actualizarResumen(); actualizarEstadisticas(); } catch(e){}
+    }catch(e){
+      console.error('❌ Error cargando nube', e);
+      cloudStatus('❌ Error al traer de la nube.');
+    }
+  };
+
+  window.cloudPush = async function(reason='manual', force=false){
+    if (typeof reason === 'boolean') { force = reason; reason = 'manual'; }
+    const binId = (typeof cloudGetBinId === 'function') ? cloudGetBinId() : null;
+    if (!binId) return;
+
+    const key = (typeof cloudGetApiKey === 'function') ? cloudGetApiKey() : (typeof getJsonbinKey === 'function' ? getJsonbinKey() : null);
+    if (!key){
+      cloudStatus('⚠️ Falta API Key (JSONBin).');
+      return;
+    }
+
+    const headers = (typeof cloudHeaders === 'function') ? cloudHeaders() : {};
+    let registros = [];
+    try { registros = JSON.parse(localStorage.getItem('registros') || '[]'); } catch(e){ registros = []; }
+
+    const payload = {
+      registros,
+      deletedIds: getDeletedIds().map(String),
+      wipeAt: getWipeAt(),
+      lastModified: Date.now()
+    };
+
+    cloudStatus('🔄 Sincronizando a la nube…');
+    console.log('🔄 Sincronizando a la nube…', reason);
+
+    try{
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (typeof setLocalLastModified === 'function') setLocalLastModified(payload.lastModified);
+      cloudStatus('✅ Sincronizado exitosamente.');
+      console.log('✅ Push OK', payload.lastModified);
+    }catch(e){
+      console.error('❌ Error sincronizando nube', e);
+      cloudStatus('❌ Error sincronizando nube.');
+    }
+  };
+
+  // Auto-sync: en vez de depender de click, hace pull periódico y en focus/online
+  window.startAutoSync = function(){
+    if (window.__autoSyncStarted) return;
+    window.__autoSyncStarted = true;
+
+    const tick = async () => {
+      try{
+        const hasBin = (typeof cloudGetBinId === 'function') && cloudGetBinId();
+        const hasKey = (typeof cloudGetApiKey === 'function' && cloudGetApiKey()) || (typeof getJsonbinKey === 'function' && getJsonbinKey());
+        if (hasBin && hasKey){
+          await window.cloudPull('auto', false);
+        }
+      }catch(e){}
+      const delay = document.hidden ? 30000 : 6000;
+      setTimeout(tick, delay);
+    };
+    tick();
+
+    document.addEventListener('visibilitychange', ()=> {
+      if (!document.hidden && ((typeof cloudGetBinId === 'function') && cloudGetBinId())) window.cloudPull('visible', false);
+    });
+    window.addEventListener('focus', ()=> { if ((typeof cloudGetBinId === 'function') && cloudGetBinId()) window.cloudPull('focus', false); });
+    window.addEventListener('online', ()=> { if ((typeof cloudGetBinId === 'function') && cloudGetBinId()) window.cloudPull('online', false); });
+  };
+
+  // Disparar autosync al cargar (si ya hay bin configurado)
+  setTimeout(()=> {
+    try { if (typeof startAutoSync === 'function') startAutoSync(); } catch(e){}
+  }, 800);
+
+})();
+
 </script>
 </body>
 </html>
