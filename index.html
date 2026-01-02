@@ -2396,10 +2396,7 @@ async function cloudPush(force=false, reason=''){
 function cloudInitUI() {
     cloudRefreshUI();
     // Auto-pull suave cada 20s (solo si hay Bin ID)
-    setInterval(() => {
-        if (cloudGetBinId()) cloudPull('auto');
-    }, 10000);
-}
+    }
 
 // Hook: al cargar la app, inicializar UI de nube
 document.addEventListener('DOMContentLoaded', () => {
