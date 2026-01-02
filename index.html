@@ -2198,7 +2198,7 @@ function cloudRefreshUI() {
 
   async function cloudPullNow() {
     cloudPersistConfigFromUI();
-    await cloudPull(true);
+    await cloudPull('manual', true);
             try{}finally{ window.__cloudPullState.inFlight = false; }
 
 }
@@ -2271,18 +2271,75 @@ async function cloudPushNow() {
             return;
         }
 
-        if (cloudLM > localLM) {
+        const localRegsNow = getRegistros() || [];
+        const localLMNow = localLM;
+        const cloudHasData = Array.isArray(cloudRegs) && cloudRegs.length > 0;
+
+        // Si el local está vacío y la nube tiene datos → aplicar nube (aunque lastModified no sea "más nuevo")
+        if (cloudHasData && (!localRegsNow || localRegsNow.length === 0)) {
+            localStorage.setItem('registros', JSON.stringify(cloudRegs));
+            setLocalLastModified(cloudLM || Date.now());
+            cloudStatus('✅ Datos traídos de la nube (local vacío).');
+            console.log('✅ Datos cargados desde la nube (local vacío)');
+            cargarHistorial();
+            filtrarResumen(true);
+            actualizarEstadisticas();
+        }
+        // Si el usuario pidió FORZADO (Traer) → aplicar nube siempre
+        else if (force) {
+            localStorage.setItem('registros', JSON.stringify(cloudRegs));
+            setLocalLastModified(cloudLM || Date.now());
+            cloudStatus('✅ Datos traídos de la nube (forzado).');
+            console.log('✅ Datos cargados desde la nube (forzado)');
+            cargarHistorial();
+            filtrarResumen(true);
+            actualizarEstadisticas();
+        }
+        // Nube más nueva → aplicar nube
+        else if (cloudLM > localLMNow) {
             localStorage.setItem('registros', JSON.stringify(cloudRegs));
             setLocalLastModified(cloudLM);
             cloudStatus('✅ Datos traídos de la nube.');
             console.log('✅ Datos cargados desde la nube (nube más nueva)');
-            // refrescar UI
             cargarHistorial();
             filtrarResumen(true);
             actualizarEstadisticas();
-        } else {
-            cloudStatus('ℹ️ Nube no más nueva que local; se mantiene local.');
-            console.log('ℹ️ Nube no más nueva que local; se mantiene local.');
+        }
+        // Nube no más nueva: en auto-pull, mezclar si hay registros nuevos que no están en local
+        else {
+            const canMerge = (reason === 'auto' || reason === 'startup' || reason === 'visible' || reason === 'focus' || reason === 'post-push');
+            if (canMerge && cloudHasData) {
+                const seen = new Set(localRegsNow.map(r => {
+                    try { return JSON.stringify(r); } catch(e) { return String(r); }
+                }));
+                const merged = [...localRegsNow];
+                let added = 0;
+                for (const r of cloudRegs) {
+                    let key;
+                    try { key = JSON.stringify(r); } catch(e) { key = String(r); }
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        merged.push(r);
+                        added++;
+                    }
+                }
+                if (added > 0) {
+                    localStorage.setItem('registros', JSON.stringify(merged));
+                    // mantenemos el mayor lastModified conocido
+                    setLocalLastModified(Math.max(localLMNow || 0, cloudLM || 0, Date.now()));
+                    cloudStatus(`✅ Sincronizado (mezcla): +${added} registro(s) desde nube.`);
+                    console.log('✅ Mezcla aplicada desde la nube:', added);
+                    cargarHistorial();
+                    filtrarResumen(true);
+                    actualizarEstadisticas();
+                } else {
+                    cloudStatus('ℹ️ Nube no más nueva que local; se mantiene local.');
+                    console.log('ℹ️ Nube no más nueva que local; se mantiene local.');
+                }
+            } else {
+                cloudStatus('ℹ️ Nube no más nueva que local; se mantiene local.');
+                console.log('ℹ️ Nube no más nueva que local; se mantiene local.');
+            }
         }
         cloudLastPullAt = Date.now();
     } catch (e) {
