@@ -2840,6 +2840,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
 })();
 
+
+
+// =====================
+// v13 – Auto-pull por polling (para ver cambios sin apretar "Traer")
+// =====================
+(function(){
+  try{
+    if (window.__cloudPollingStarted) return;
+    window.__cloudPollingStarted = true;
+
+    const tick = async () => {
+      try{
+        if (document.hidden) return; // en segundo plano evitamos
+        if (!window.cloudGetBinId || !window.cloudGetBinId()) return;
+        // usamos window.cloudPull para respetar el override v12
+        if (typeof window.cloudPull === 'function') {
+          await window.cloudPull('auto', false);
+        }
+      }catch(e){}
+    };
+
+    // polling suave
+    window.__cloudPollTimer = setInterval(tick, 8000);
+
+    // al volver a la pestaña, traer al toque
+    document.addEventListener('visibilitychange', ()=> {
+      if (!document.hidden) { tick(); }
+    });
+  }catch(e){}
+})();
+
 </script>
 </body>
 </html>
